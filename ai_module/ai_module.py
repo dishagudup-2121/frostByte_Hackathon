@@ -2,6 +2,7 @@
 import os
 import json
 import sqlite3
+import requests
 from mistralai import Mistral
 from dotenv import load_dotenv
 
@@ -68,3 +69,20 @@ Text: {text}
 
     save_result(result)
     return result
+if __name__ == "__main__":
+    text = "Mileage is very poor"
+    result = analyze_sentiment(text)
+    print(result)
+
+    requests.post(
+        "http://127.0.0.1:8000/posts",
+        json={
+            "brand": "Hyundai",
+            "text": text,
+            "latitude": 19.07,
+            "longitude": 72.87,
+            "sentiment": result["sentiment"],
+            "confidence": result["confidence"]
+        }
+    )
+
