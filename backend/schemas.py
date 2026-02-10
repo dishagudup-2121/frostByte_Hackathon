@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
+
 class SocialPostCreate(BaseModel):
     brand: str
     text: str
