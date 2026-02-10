@@ -1,139 +1,144 @@
-# ai_module/ai_module.py
-
 import os
 import json
-from typing import Dict
+import sqlite3
+import requests
 from mistralai import Mistral
 from dotenv import load_dotenv
 
-# --------------------------------------------------
-# Load environment variables
-# --------------------------------------------------
 load_dotenv()
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+api_key = os.getenv("MISTRAL_API_KEY")
+client = Mistral(api_key=api_key)
 
-if not MISTRAL_API_KEY:
-    print("⚠️ WARNING: MISTRAL_API_KEY not set. AI disabled.")
-    client = None
+# SQLite DB for local logging
+conn = sqlite3.connect("sentiment.db", check_same_thread=False)
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS sentiment_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sentiment TEXT,
+    confidence REAL,
+    key_topic TEXT
+)
+""")
+conn.commit()
 
 
-client = Mistral(api_key=MISTRAL_API_KEY)
+def save_result(result: dict):
+    cursor.execute(
+        "INSERT INTO sentiment_results (sentiment, confidence, key_topic) VALUES (?, ?, ?)",
+        (result["sentiment"], result["confidence"], result["key_topic"])
+    )
+    conn.commit()
 
-# --------------------------------------------------
-# Brand detection (simple & fast)
-# --------------------------------------------------
-KNOWN_BRANDS = [
-    "hyundai", "tata", "mahindra", "toyota",
-    "honda", "suzuki", "kia", "bmw", "audi"
-]
 
-def detect_brand(text: str) -> str:
-    text_lower = text.lower()
-    for brand in KNOWN_BRANDS:
-        if brand in text_lower:
-            return brand.capitalize()
-    return "Unknown"
-
-# --------------------------------------------------
-# Location detection (basic keyword mapping)
-# --------------------------------------------------
-CITY_COORDS = {
-    "pune": (18.5204, 73.8567),
-    "mumbai": (19.0760, 72.8777),
-    "bangalore": (12.9716, 77.5946),
-    "delhi": (28.6139, 77.2090),
-    "chennai": (13.0827, 80.2707)
-}
-
-def detect_location(text: str):
-    text_lower = text.lower()
-    for city, coords in CITY_COORDS.items():
-        if city in text_lower:
-            return coords
-    return (None, None)
-
-# --------------------------------------------------
-# Core AI function (PURE FUNCTION)
-# --------------------------------------------------
-def analyze_sentiment(text: str) -> Dict:
-    
-    if client is None:
-        return {
-            "brand": "Unknown",
-            "latitude": None,
-            "longitude": None,
-            "sentiment": "unknown",
-            "confidence": 0.0,
-            "key_topic": "api_key_missing"
-        }
-
-    
-    """
-    PURE AI FUNCTION
-    - No database
-    - No network except Mistral
-    - Safe to import in FastAPI
-    """
-
+def analyze_sentiment(text: str) -> dict:
     response = client.chat.complete(
         model="mistral-large-latest",
         messages=[
             {
                 "role": "user",
                 "content": f"""
-Analyze the automotive sentiment of the following text.
-
+Analyze automotive sentiment from this text.
 Return ONLY valid JSON (no markdown, no explanation):
 
 {{
-  "sentiment": "positive | negative | neutral",
-  "confidence": 0.0-1.0,
+  "sentiment": "positive/negative/neutral",
+  "confidence": 0-1,
   "key_topic": "main automotive issue"
 }}
 
-Text:
-{text}
+Text: {text}
 """
             }
         ]
     )
 
-    raw_output = response.choices[0].message.content.strip()
+    output = response.choices[0].message.content.strip()
 
-    # Safety: strip markdown if model adds it
-    if "```" in raw_output:
-        raw_output = raw_output.replace("```json", "").replace("```", "").strip()
+    # Remove markdown safely if present
+    if "```" in output:
+        parts = output.split("```")
+        if len(parts) > 1:
+            output = parts[1].replace("json", "").strip()
 
+    # Parse safely
     try:
-        ai_result = json.loads(raw_output)
+        parsed = json.loads(output)
     except Exception:
-        ai_result = {
+        parsed = {
             "sentiment": "unknown",
             "confidence": 0.0,
             "key_topic": "parse_error"
         }
 
-    # Enforce schema
-    sentiment = str(ai_result.get("sentiment", "unknown")).lower()
-    confidence = float(ai_result.get("confidence", 0.0))
-    key_topic = str(ai_result.get("key_topic", "unknown"))
+    # Enforce consistent schema
+    result = {
+        "sentiment": str(parsed.get("sentiment", "unknown")).lower(),
+        "confidence": float(parsed.get("confidence", 0)),
+        "key_topic": str(parsed.get("key_topic", "unknown"))
+    }
+    result["confidence"] = max(0.0, min(1.0, float(result["confidence"])))
 
-    brand = detect_brand(text)
-    latitude, longitude = detect_location(text)
+    if result["sentiment"] not in ["positive", "negative", "neutral"]:
+      result["sentiment"] = "neutral"
 
-    return {
-        "brand": brand,
-        "latitude": latitude,
-        "longitude": longitude,
-        "sentiment": sentiment,
-        "confidence": confidence,
-        "key_topic": key_topic
+    save_result(result)
+    return result
+
+
+brands = ["hyundai", "toyota", "honda", "tata", "mahindra"]
+
+def detect_brand(text):
+    text = text.lower()
+    for b in brands:
+        if b in text:
+            return b.capitalize()
+    return "Unknown"
+def extract_location(text):
+    cities = {
+        "mumbai": (19.07, 72.87),
+        "pune": (18.52, 73.85),
+        "delhi": (28.61, 77.20)
     }
 
-# --------------------------------------------------
-# Optional local test (SAFE)
-# --------------------------------------------------
+    text = text.lower()
+    for city, coords in cities.items():
+        if city in text:
+            return coords
+    return (0.0, 0.0)
+
+def categorize_topic(topic):
+    topic = topic.lower()
+    if "mile" in topic: return "Mileage"
+    if "engine" in topic: return "Engine"
+    if "comfort" in topic: return "Comfort"
+    if "service" in topic: return "Service"
+    return "Other"
+
+
+
+# Local test + backend push
 if __name__ == "__main__":
-    sample_text = "Hyundai mileage is very poor in Pune"
-    result = analyze_sentiment(sample_text)
-    print(json.dumps(result, indent=2))
+    text = "Mileage is very poor Hyundai car"   # text FIRST
+    brand = detect_brand(text)  
+    lat, lon = extract_location(text)                # then detect brand
+
+    result = analyze_sentiment(text)
+    print(result)
+
+    try:
+        requests.post(
+            "http://127.0.0.1:8000/posts",
+            json={
+                "brand": brand,
+                "text": text,
+                "latitude": lat,
+                "longitude": lon,
+                "sentiment": result["sentiment"],
+                "confidence": result["confidence"]
+            },
+            timeout=10
+        )
+    except Exception as e:
+        print("Backend POST failed:", e)
