@@ -1,22 +1,56 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from datetime import datetime
 
-from backend.database import get_db
+from backend.database import get_db, engine
 from backend import models
+from backend.schemas import SocialPostCreate
 from backend.ai_routes import router as ai_router
 
-
-
-# ✅ MUST create FastAPI app FIRST
+# Create FastAPI app
 app = FastAPI()
+
+# Include AI routes
 app.include_router(ai_router, prefix="/ai", tags=["AI"])
 
+# Create tables at startup
+models.Base.metadata.create_all(bind=engine)
+
+# -----------------------
+# Health check
+# -----------------------
 @app.get("/")
 def root():
     return {"status": "GeoDrive Insight backend running"}
 
-# Analytics endpoint
+# -----------------------
+# Person 1 → Ingestion API
+# -----------------------
+@app.post("/posts")
+def create_post(post: SocialPostCreate, db: Session = Depends(get_db)):
+    db_post = models.SocialPost(
+        brand=post.brand,
+        text=post.text,
+        latitude=post.latitude,
+        longitude=post.longitude,
+        sentiment=post.sentiment,
+        confidence=post.confidence,
+        created_at=post.created_at or datetime.utcnow()
+    )
+
+    db.add(db_post)
+    db.commit()
+    db.refresh(db_post)
+
+    return {
+        "message": "Post ingested successfully",
+        "post_id": db_post.id
+    }
+
+# -----------------------
+# Person 2 → Analytics API
+# -----------------------
 @app.get("/analytics/sentiment")
 def sentiment_by_brand(db: Session = Depends(get_db)):
     result = (
@@ -29,4 +63,11 @@ def sentiment_by_brand(db: Session = Depends(get_db)):
         .all()
     )
 
-    return result
+    return [
+        {
+            "brand": r.brand,
+            "sentiment": r.sentiment,
+            "count": r.count
+        }
+        for r in result
+    ]
