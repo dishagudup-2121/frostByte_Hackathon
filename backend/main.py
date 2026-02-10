@@ -4,9 +4,13 @@ from sqlalchemy import func
 
 from backend.database import get_db
 from backend import models
+from backend.ai_routes import router as ai_router
+
+
 
 # ✅ MUST create FastAPI app FIRST
 app = FastAPI()
+app.include_router(ai_router, prefix="/ai", tags=["AI"])
 
 @app.get("/")
 def root():
