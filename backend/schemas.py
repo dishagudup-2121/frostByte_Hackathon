@@ -9,8 +9,4 @@ class SocialPostCreate(BaseModel):
     longitude: float
     sentiment: str
     confidence: float
-<<<<<<< HEAD
     created_at: Optional[datetime] = None
-=======
-    created_at: Optional[datetime] = None
->>>>>>> 02680d5 (Add .gitignore and remove virtual environment)
