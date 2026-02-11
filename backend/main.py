@@ -8,10 +8,19 @@ from backend import models
 from backend.schemas import SocialPostCreate
 from backend.ai_routes import router as ai_router
 from backend.analytics_extra import router as extra_router
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.include_router(ai_router, prefix="/ai", tags=["AI"])
 app.include_router(extra_router, prefix="/analytics", tags=["Analytics"])
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 models.Base.metadata.create_all(bind=engine)
