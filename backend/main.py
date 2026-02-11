@@ -10,7 +10,6 @@ from backend.ai_routes import router as ai_router
 from backend.analytics_extra import router as extra_router
 
 app = FastAPI()
-
 app.include_router(ai_router, prefix="/ai", tags=["AI"])
 app.include_router(extra_router, prefix="/analytics", tags=["Analytics"])
 

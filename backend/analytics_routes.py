@@ -31,3 +31,4 @@ def sentiment_by_brand(db: Session = Depends(get_db)):
             "error": str(e),
             "hint": "Check column names & table schema"
         }
+

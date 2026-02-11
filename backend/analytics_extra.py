@@ -43,3 +43,32 @@ def location_summary(db: Session = Depends(get_db)):
         for r in results
     ]
 
+@router.get("/brand-sentiment-ratio")
+def brand_sentiment_ratio(db: Session = Depends(get_db)):
+    results = (
+        db.query(
+            models.SocialPost.brand,
+            models.SocialPost.sentiment,
+            func.count(models.SocialPost.id).label("count")
+        )
+        .group_by(
+            models.SocialPost.brand,
+            models.SocialPost.sentiment
+        )
+        .all()
+    )
+
+    data = {}
+
+    for r in results:
+        if r.brand not in data:
+            data[r.brand] = {
+                "brand": r.brand,
+                "positive": 0,
+                "negative": 0,
+                "neutral": 0
+            }
+
+        data[r.brand][r.sentiment] = r.count
+
+    return list(data.values())
