@@ -30,6 +30,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-
+backend/
 __pycache__/
 *.pyc
