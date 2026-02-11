@@ -6,8 +6,8 @@ from typing import Optional, Literal
 class SocialPostCreate(BaseModel):
     brand: str
     text: str
-    latitude: float
-    longitude: float
+    latitude: float | None = None
+    longitude: float | None = None
     sentiment: Literal["positive", "negative", "neutral"]
     confidence: float = Field(..., ge=0.0, le=1.0)
     created_at: Optional[datetime] = None
