@@ -8,9 +8,12 @@ client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
 
 # Expanded brand list
 BRANDS = [
-    "hyundai","toyota","honda","tata","mahindra",
-    "bmw","audi","kia","mercedes","ford","skoda"
+ "hyundai","toyota","honda","tata","mahindra",
+ "bmw","audi","kia","mercedes","ford",
+ "skoda","vw","volkswagen","mg","jeep",
+ "nissan","renault","suzuki","maruti"
 ]
+
 
 # Expanded location list
 CITIES = {
@@ -37,23 +40,24 @@ def extract_location(text):
 
 def analyze_sentiment(text: str):
     prompt = f"""
-You are an automotive sentiment AI.
+You are an automotive sentiment analysis AI.
 
-Analyze this car-related text and return ONLY valid JSON:
-
+Return ONLY JSON:
 {{
-  "sentiment": "positive/negative/neutral",
-  "confidence": 0-1,
-  "key_topic": "mileage/engine/service/design/price/comfort/other"
+ "sentiment": "positive|negative|neutral",
+ "confidence": 0-1,
+ "key_topic": "mileage|engine|service|price|comfort|performance|design|other"
 }}
 
 Rules:
-- Mileage complaints → negative
 - Praise → positive
-- Neutral info → neutral
+- Complaints (cost, poor mileage, bad service) → negative
+- Info/news → neutral
 
 Text: {text}
 """
+
+
 
     response = client.chat.complete(
         model="mistral-large-latest",

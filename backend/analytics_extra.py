@@ -43,8 +43,6 @@ def location_summary(db: Session = Depends(get_db)):
         for r in results
     ]
 
-
-
 @router.get("/brand-sentiment-ratio")
 def brand_sentiment_ratio(db: Session = Depends(get_db)):
     results = (
