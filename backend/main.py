@@ -7,6 +7,7 @@ from backend.database import get_db, engine
 from backend import models
 from backend.schemas import SocialPostCreate
 from backend.ai_routes import router as ai_router
+from backend.analytics_extra import router as extra_router
 
 app = FastAPI()
 
