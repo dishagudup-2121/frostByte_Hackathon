@@ -50,7 +50,7 @@ def create_post(post: SocialPostCreate, db: Session = Depends(get_db)):
         "post_id": db_post.id
     }
 
-@app.get("/analytics/sentiment")
+@app.get("/sentiment")
 def sentiment_by_brand(db: Session = Depends(get_db)):
     result = (
         db.query(
