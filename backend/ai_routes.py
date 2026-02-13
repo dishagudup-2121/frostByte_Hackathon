@@ -1,19 +1,18 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import requests
-from ai_module.ai_module import analyze_sentiment
-
-
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from fastapi import Depends, HTTPException
 from backend.database import get_db
 from backend import models
+from ai_module.ai_module import analyze_sentiment
+from collections import Counter
+import re
 
 router = APIRouter()
 
-# Updated Request model
+
 class AnalyzeRequest(BaseModel):
     text: str
     latitude: Optional[float] = None
@@ -25,18 +24,14 @@ def analyze_text(request: AnalyzeRequest):
 
     text = request.text
 
-    # Call AI module
     result = analyze_sentiment(text)
 
-    # Extract AI-based location
     extracted_lat = result.get("latitude", 0)
     extracted_lon = result.get("longitude", 0)
 
-    # Override with device location if provided
     lat = request.latitude if request.latitude is not None else extracted_lat
     lon = request.longitude if request.longitude is not None else extracted_lon
 
-    # Send to ingestion endpoint
     try:
         requests.post(
             "http://127.0.0.1:8000/posts",
@@ -53,7 +48,6 @@ def analyze_text(request: AnalyzeRequest):
     except Exception as e:
         print("DB POST failed:", e)
 
-    # Return AI result (with final lat/lon used)
     return {
         **result,
         "latitude": lat,
@@ -67,20 +61,19 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
 
     text = request.text.lower()
 
-    # Basic product detection (match model_name inside text)
-    all_products = db.query(models.Product).all()
 
+    all_products = db.query(models.Product).all()
     product = None
+
     for p in all_products:
-        if p.model_name.lower() in text:
+        model_words = p.model_name.lower().split()
+        if any(word in text for word in model_words):
             product = p
             break
-
 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found in DB")
 
-    # Sentiment aggregation
     total_reviews = db.query(models.Review).filter(
         models.Review.product_id == product.id
     ).count()
@@ -99,7 +92,12 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         models.Review.product_id == product.id
     ).scalar() or 0
 
-    # Price history
+    sentiment_summary = {
+        "positive": int((positive / total_reviews) * 100) if total_reviews else 0,
+        "negative": int((negative / total_reviews) * 100) if total_reviews else 0,
+        "confidence": round(float(confidence_avg), 2)
+    }
+
     price_data = db.query(models.PriceHistory).filter(
         models.PriceHistory.product_id == product.id
     ).all()
@@ -109,7 +107,6 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         for p in price_data
     ]
 
-    # Availability
     availability_data = db.query(models.Availability).filter(
         models.Availability.product_id == product.id
     ).all()
@@ -119,7 +116,6 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         for a in availability_data
     ]
 
-    # Review volume trend
     review_trend_raw = db.query(
         func.to_char(models.Review.created_at, 'Mon').label("month"),
         func.count(models.Review.id).label("count")
@@ -132,11 +128,29 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         for r in review_trend_raw
     ]
 
-    sentiment_summary = {
-        "positive": int((positive / total_reviews) * 100) if total_reviews else 0,
-        "negative": int((negative / total_reviews) * 100) if total_reviews else 0,
-        "confidence": round(float(confidence_avg), 2)
+
+    reviews = db.query(models.Review.comment).filter(
+        models.Review.product_id == product.id
+    ).all()
+
+    all_text = " ".join([r[0] for r in reviews]).lower()
+
+    words = re.findall(r'\b[a-z]{4,}\b', all_text)
+
+    stopwords = {
+        "this", "that", "with", "have", "very", "good",
+        "nice", "from", "they", "will", "your", "about",
+        "there", "which", "their"
     }
+
+    filtered_words = [w for w in words if w not in stopwords]
+
+    word_counts = Counter(filtered_words).most_common(5)
+
+    top_topics = [
+        {"topic": word, "count": count}
+        for word, count in word_counts
+    ]
 
     return {
         "product_id": product.id,
@@ -146,9 +160,6 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         "price_history": price_history,
         "availability_by_region": availability,
         "sentiment_summary": sentiment_summary,
-        "top_topics": [   # temporary mock
-            {"topic": "mileage", "count": 20},
-            {"topic": "price", "count": 15}
-        ],
+        "top_topics": top_topics,
         "review_volume_trend": review_volume_trend
     }
