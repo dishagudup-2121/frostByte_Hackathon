@@ -1,14 +1,15 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8000"; // change if backend hosted
+const BASE_URL = "http://127.0.0.1:8000"; // keep consistent
 
-export const analyzeProduct = (comment) =>
-  axios.post(`${BASE_URL}/analyze-product`, { comment });
+export const analyzeProduct = (text) =>
+  axios.post(`${BASE_URL}/ai/analyze-product`, { text });
+
 
 export const getProductReviews = (id, sentiment) =>
-  axios.get(`${BASE_URL}/product/${id}/reviews`, {
+  axios.get(`${BASE_URL}/analytics/product/${id}/reviews`, {
     params: { sentiment }
   });
 
 export const getCompanyAnalytics = (company) =>
-  axios.get(`${BASE_URL}/company/${company}/analytics`);
+  axios.get(`${BASE_URL}/analytics/company-summary/${company}`);

@@ -8,6 +8,7 @@ from backend.database import get_db
 from backend import models
 from ai_module.ai_module import analyze_sentiment
 from collections import Counter
+from backend.database import SessionLocal
 import re
 
 router = APIRouter()
@@ -20,11 +21,14 @@ class AnalyzeRequest(BaseModel):
 
 
 @router.post("/analyze")
-def analyze_text(request: AnalyzeRequest):
+def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
 
     text = request.text
-
     result = analyze_sentiment(text)
+
+    brand = result.get("brand", "Unknown")
+    sentiment = result.get("sentiment", "neutral")
+    confidence = result.get("confidence", 0.5)
 
     extracted_lat = result.get("latitude", 0)
     extracted_lon = result.get("longitude", 0)
@@ -32,21 +36,41 @@ def analyze_text(request: AnalyzeRequest):
     lat = request.latitude if request.latitude is not None else extracted_lat
     lon = request.longitude if request.longitude is not None else extracted_lon
 
-    try:
-        requests.post(
-            "http://127.0.0.1:8000/posts",
-            json={
-                "brand": result.get("brand", "Unknown"),
-                "text": text,
-                "latitude": lat,
-                "longitude": lon,
-                "sentiment": result.get("sentiment", "neutral"),
-                "confidence": result.get("confidence", 0.5)
-            },
-            timeout=5
+    # 1️⃣ Insert into social_posts
+    new_post = models.SocialPost(
+        brand=brand,
+        text=text,
+        latitude=lat,
+        longitude=lon,
+        sentiment=sentiment,
+        confidence=confidence
+    )
+    db.add(new_post)
+
+    # 2️⃣ Auto-create product if not exists
+    product = db.query(models.Product).filter(
+        models.Product.company.ilike(f"%{brand}%")
+    ).first()
+
+    if not product:
+        product = models.Product(
+            model_name=f"{brand} Auto Model",
+            company=brand,
+            current_price=0
         )
-    except Exception as e:
-        print("DB POST failed:", e)
+        db.add(product)
+        db.flush()   # get product.id immediately
+
+    # 3️⃣ Insert into reviews table
+    new_review = models.Review(
+        product_id=product.id,
+        comment=text,
+        sentiment=sentiment,
+        confidence=confidence
+    )
+    db.add(new_review)
+
+    db.commit()
 
     return {
         **result,
@@ -62,18 +86,19 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
     text = request.text.lower()
 
 
-    all_products = db.query(models.Product).all()
-    product = None
+    product = db.query(models.Product).filter(
+        func.lower(models.Product.company).contains(text)
+    ).first()
 
-    for p in all_products:
-        model_words = p.model_name.lower().split()
-        if any(word in text for word in model_words):
-            product = p
-            break
+    # 2️⃣ If not found, try match by model name
+    if not product:
+        product = db.query(models.Product).filter(
+            func.lower(models.Product.model_name).contains(text)
+        ).first()
 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found in DB")
-
+    
     total_reviews = db.query(models.Review).filter(
         models.Review.product_id == product.id
     ).count()

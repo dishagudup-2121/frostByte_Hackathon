@@ -55,27 +55,42 @@ export default function Dashboard() {
   const analyze = async () => {
     if (!text.trim()) return;
     setLoading(true);
+
     navigator.geolocation.getCurrentPosition(async (pos) => {
       try {
         const res = await axios.post(`${API}/ai/analyze`, {
-          text, latitude: pos.coords.latitude, longitude: pos.coords.longitude,
+          text,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
         });
+
         const newData = {
-          ...res.data, lat: pos.coords.latitude, lng: pos.coords.longitude,
+          ...res.data,
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
           time: new Date().toLocaleTimeString(),
-          markerColor: res.data.sentiment === "positive" ? "#00f2ff" : res.data.sentiment === "negative" ? "#ff0055" : "#fbff00",
+          markerColor:
+            res.data.sentiment === "positive"
+              ? "#00f2ff"
+              : res.data.sentiment === "negative"
+              ? "#ff0055"
+              : "#fbff00",
         };
+
         setResult(newData);
         setHistory((prev) => [newData, ...prev]);
         updateRadar(res.data);
         fetchAnalytics();
-      } catch (err) { console.error("Analysis failed:", err); } 
-      finally { setLoading(false); }
-    }, (err) => {
-      console.error("Geo Denied", err);
-      setLoading(false);
+
+      } catch (err) {
+        console.error("Analysis failed:", err);
+      } finally {
+        setLoading(false);
+      }
     });
   };
+
+
 
   const exportPDF = () => {
     const input = reportRef.current;
