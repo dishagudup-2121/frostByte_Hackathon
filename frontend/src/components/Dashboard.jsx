@@ -9,6 +9,10 @@ import html2canvas from "html2canvas";
 import ProductDetails from "./ProductDetails";
 import ReviewPanels from "./ReviewSummaryCards";
 import ProductComparison from "./ProductComparison";
+import { getCompanyAnalytics } from "../api/productApi";
+import CompanyInsights from "./CompanyInsights";
+
+
 
 import "leaflet/dist/leaflet.css";
 import "chart.js/auto";
@@ -175,7 +179,13 @@ export default function Dashboard() {
         </section>
 
         {/* Deep Scan */}
-        <ProductDetails onDataReceived={(data) => setProductResult(data)} />
+        <div className="product-insight-row">
+  <ProductDetails onDataReceived={(d)=>setProductResult(d)} />
+  <CompanyInsights company={productResult?.company} />
+</div>
+
+
+
 
         {productResult && productResult.product_id && (
           <section className="card glass-card anim-up">
