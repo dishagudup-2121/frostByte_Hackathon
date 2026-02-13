@@ -292,3 +292,124 @@ canvas {
 .loader-small { width: 20px; height: 20px; border-width: 3px; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Advanced Grid for Map and History */
+.advanced-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 0.9fr;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.map-container {
+  height: 300px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+.map-wrapper {
+  border: 2px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 40px rgba(99, 102, 241, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.history-list {
+  height: 300px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid var(--primary); /* Accent line */
+  transition: 0.3s;
+}
+
+.export-btn {
+  background: var(--accent);
+  color: var(--bg-dark);
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+}
+
+/* Map specific styling */
+.leaflet-container { background: #020617 !important; }
+
+
+/* Pulsing Leaflet Markers */
+.leaflet-interactive {
+  filter: drop-shadow(0 0 10px currentColor); /* Creates the neon glow */
+  transition: all 0.4s ease;
+}
+
+.leaflet-interactive:hover {
+  filter: drop-shadow(0 0 20px currentColor);
+  stroke-width: 8;
+}
+
+/* Custom Popup Styling */
+.leaflet-popup-content-wrapper {
+  background: rgba(15, 23, 42, 0.9) !important;
+  color: white !important;
+  border: 1px solid var(--primary);
+  backdrop-filter: blur(10px);
+  border-radius: 12px !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--primary) !important;
+}
+
+@media (max-width: 1024px) {
+  .advanced-grid { grid-template-columns: 1fr; }
+
+}
+
+/* Fix for button overlap in image_7931c2.png */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  position: relative;
+}
+
+.premium-textarea {
+  min-height: 120px;
+  margin-bottom: 10px; /* Space for the button */
+}
+
+/* Status Pills for Analysis History */
+.status-pill {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.status-pill.positive { 
+  color: #00ffcc; 
+  text-shadow: 0 0 10px rgba(0, 255, 204, 0.5); 
+}
+.status-pill.negative { 
+  color: #ff3366; 
+  text-shadow: 0 0 10px rgba(255, 51, 102, 0.5); 
+}
+.status-pill.neutral { 
+  color: #ffcc00; 
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5); 
+}
+
+/* Map Z-Index fix */
+.leaflet-container {
+  z-index: 1 !important;
+}
