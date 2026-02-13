@@ -6,11 +6,10 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-// --- Required Components for Feature D ---
 import ProductDetails from "./ProductDetails";
 import ReviewPanels from "./ReviewSummaryCards";
+import ProductComparison from "./ProductComparison";
 
-// --- CSS Imports ---
 import "leaflet/dist/leaflet.css";
 import "chart.js/auto";
 import "../App.css";
@@ -22,12 +21,15 @@ export default function Dashboard() {
   const reportRef = useRef();
 
   const [text, setText] = useState("");
-  const [result, setResult] = useState(null);
+
+  // 🔥 Separate states
+  const [sentimentResult, setSentimentResult] = useState(null);
+  const [productResult, setProductResult] = useState(null);
+
   const [brandData, setBrandData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
-  
-  // Sensitive baseline (25) to prevent "constant/flat" graphs
+
   const [radarScores, setRadarScores] = useState(new Array(10).fill(25));
 
   useEffect(() => {
@@ -38,16 +40,37 @@ export default function Dashboard() {
     try {
       const res = await axios.get(`${API}/analytics/brand-summary`);
       setBrandData(res.data);
-    } catch (err) { console.error("Sync Error:", err); }
+    } catch (err) {
+      console.error("Sync Error:", err);
+    }
   };
 
   const updateRadar = (data) => {
-    const TOPICS = ["mileage","engine","service","price","comfort","performance","design","safety","features","other"];
+    const TOPICS = [
+      "mileage",
+      "engine",
+      "service",
+      "price",
+      "comfort",
+      "performance",
+      "design",
+      "safety",
+      "features",
+      "other",
+    ];
+
     const topic = (data.key_topic || "other").toLowerCase();
     const index = TOPICS.indexOf(topic);
-    const scores = new Array(10).fill(25); 
+    const scores = new Array(10).fill(25);
+
     if (index !== -1) {
-      scores[index] = data.sentiment === "positive" ? 100 : data.sentiment === "negative" ? 15 : 60;
+      scores[index] =
+        data.sentiment === "positive"
+          ? 100
+          : data.sentiment === "negative"
+          ? 15
+          : 60;
+
       setRadarScores(scores);
     }
   };
@@ -77,11 +100,10 @@ export default function Dashboard() {
               : "#fbff00",
         };
 
-        setResult(newData);
+        setSentimentResult(newData);
         setHistory((prev) => [newData, ...prev]);
         updateRadar(res.data);
         fetchAnalytics();
-
       } catch (err) {
         console.error("Analysis failed:", err);
       } finally {
@@ -89,8 +111,6 @@ export default function Dashboard() {
       }
     });
   };
-
-
 
   const exportPDF = () => {
     const input = reportRef.current;
@@ -105,19 +125,30 @@ export default function Dashboard() {
   return (
     <div className="dashboard-root">
       <div className="bg-glow"></div>
-      
+
       <main className="dashboard-container-v3" ref={reportRef}>
-        {/* 1. Header Section */}
+        {/* Header */}
         <header className="header-top anim-up">
-          <button className="back-home-btn" onClick={() => navigate("/")}>Home</button>
+          <button
+            className="back-home-btn"
+            onClick={() => navigate("/")}
+          >
+            Home
+          </button>
+
           <div className="header-title-group">
-            <h1 className="hero-title-small"><span className="text-gradient">GeoDrive</span> Pro Dashboard</h1>
+            <h1 className="hero-title-small">
+              <span className="text-gradient">GeoDrive</span> Pro Dashboard
+            </h1>
             <p className="subtitle">Intelligence Hub</p>
           </div>
-          <button className="export-btn" onClick={exportPDF}>Export PDF</button>
+
+          <button className="export-btn" onClick={exportPDF}>
+            Export PDF
+          </button>
         </header>
 
-        {/* 2. Neural Input Section */}
+        {/* Neural Input */}
         <section className="card glass-card anim-up">
           <div className="input-vertical-group">
             <textarea
@@ -126,38 +157,77 @@ export default function Dashboard() {
               onChange={(e) => setText(e.target.value)}
               className="premium-textarea"
             />
+
             <div className="btn-center-wrap">
-              <button onClick={analyze} className="premium-btn" disabled={loading}>
-                {loading ? <span className="loader-small"></span> : "Execute Neural Analysis"}
+              <button
+                onClick={analyze}
+                className="premium-btn"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="loader-small"></span>
+                ) : (
+                  "Execute Neural Analysis"
+                )}
               </button>
             </div>
           </div>
         </section>
 
-        {/* --- FEATURE D: PRODUCT INSIGHT UI --- */}
-        <ProductDetails onDataReceived={(data) => setResult(data)} />
+        {/* Deep Scan */}
+        <ProductDetails onDataReceived={(data) => setProductResult(data)} />
 
-        {result && result.product_id && (
+        {productResult && productResult.product_id && (
           <section className="card glass-card anim-up">
-            <h3>Neural Review Comparison: {result.model_name || "Deep Scan"}</h3>
-            <ReviewPanels productId={result.product_id} />
+            <h3>
+              Neural Review Comparison:{" "}
+              {productResult.model_name || "Deep Scan"}
+            </h3>
+            <ReviewPanels productId={productResult.product_id} />
           </section>
         )}
 
-        {/* 3. Mid Section: Map & Activity Feed */}
+        {/* Comparison Section */}
+        <ProductComparison />
+
+        {/* Map & Activity */}
         <div className="mid-visual-grid anim-up">
           <div className="card map-card">
             <h3>Sentiment Heatmap</h3>
-            <div className="map-wrapper" style={{ height: "450px", borderRadius: '24px', overflow: 'hidden' }}>
-              <MapContainer center={[18.5204, 73.8567]} zoom={8} style={{ height: "100%", width: "100%" }}>
+            <div
+              className="map-wrapper"
+              style={{
+                height: "450px",
+                borderRadius: "24px",
+                overflow: "hidden",
+              }}
+            >
+              <MapContainer
+                center={[18.5204, 73.8567]}
+                zoom={8}
+                style={{ height: "100%", width: "100%" }}
+              >
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+
                 {history.map((item, i) => (
-                  <CircleMarker 
-                    key={i} center={[item.lat, item.lng]} 
-                    pathOptions={{ color: item.markerColor, fillColor: item.markerColor, fillOpacity: 0.9, weight: 5 }}
+                  <CircleMarker
+                    key={i}
+                    center={[item.lat, item.lng]}
+                    pathOptions={{
+                      color: item.markerColor,
+                      fillColor: item.markerColor,
+                      fillOpacity: 0.9,
+                      weight: 5,
+                    }}
                     radius={14}
                   >
-                    <Popup><div style={{color:'#000'}}><strong>{item.brand}</strong><br/>{item.sentiment}</div></Popup>
+                    <Popup>
+                      <div style={{ color: "#000" }}>
+                        <strong>{item.brand}</strong>
+                        <br />
+                        {item.sentiment}
+                      </div>
+                    </Popup>
                   </CircleMarker>
                 ))}
               </MapContainer>
@@ -167,12 +237,19 @@ export default function Dashboard() {
           <div className="card log-card">
             <h3>Live Activity Feed</h3>
             <div className="history-list">
-              {history.length === 0 && <p className="text-muted">Awaiting neural input...</p>}
+              {history.length === 0 && (
+                <p className="text-muted">
+                  Awaiting neural input...
+                </p>
+              )}
+
               {history.map((h, i) => (
                 <div key={i} className="history-item">
                   <div className="log-header">
                     <span>{h.time}</span>
-                    <span className={h.sentiment.toLowerCase()}>{h.sentiment.toUpperCase()}</span>
+                    <span className={h.sentiment.toLowerCase()}>
+                      {h.sentiment.toUpperCase()}
+                    </span>
                   </div>
                   <strong>{h.brand}</strong>
                 </div>
@@ -181,28 +258,54 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 4. Bottom Section: Graphs */}
+        {/* Charts */}
         <div className="bottom-charts-grid anim-up delay-1">
           <div className="card chart-box">
             <h3>Sentiment Fingerprint (Topic Analysis)</h3>
             <div className="chart-inner">
-              <Radar 
+              <Radar
                 data={{
-                  labels: ["Mileage","Engine","Service","Price","Comfort","Performance","Design","Safety","Features","Other"],
-                  datasets: [{ label: "Neural Score", data: radarScores, backgroundColor: "rgba(99,102,241,0.2)", borderColor: "#6366f1", borderWidth: 2 }]
-                }} 
-                options={{ responsive: true, maintainAspectRatio: false }} 
+                  labels: [
+                    "Mileage",
+                    "Engine",
+                    "Service",
+                    "Price",
+                    "Comfort",
+                    "Performance",
+                    "Design",
+                    "Safety",
+                    "Features",
+                    "Other",
+                  ],
+                  datasets: [
+                    {
+                      label: "Neural Score",
+                      data: radarScores,
+                      backgroundColor: "rgba(99,102,241,0.2)",
+                      borderColor: "#6366f1",
+                      borderWidth: 2,
+                    },
+                  ],
+                }}
+                options={{ responsive: true, maintainAspectRatio: false }}
               />
             </div>
           </div>
 
           <div className="card chart-box">
-            <h3>Market Brand Volume (Aggregated Data)</h3>
+            <h3>Market Brand Volume</h3>
             <div className="chart-inner">
               <Bar
                 data={{
-                  labels: brandData.map(b => b.brand),
-                  datasets: [{ label: "Total Mentions", data: brandData.map(b => b.total_posts), backgroundColor: "#6366f1", borderRadius: 8 }]
+                  labels: brandData.map((b) => b.brand),
+                  datasets: [
+                    {
+                      label: "Total Mentions",
+                      data: brandData.map((b) => b.total_posts),
+                      backgroundColor: "#6366f1",
+                      borderRadius: 8,
+                    },
+                  ],
                 }}
                 options={{ responsive: true, maintainAspectRatio: false }}
               />

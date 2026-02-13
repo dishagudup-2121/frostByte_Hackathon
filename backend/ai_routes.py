@@ -1,18 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-import requests
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.database import get_db
 from backend import models
 from ai_module.ai_module import analyze_sentiment
 from collections import Counter
-from backend.database import SessionLocal
 import re
 
 router = APIRouter()
-
 
 class AnalyzeRequest(BaseModel):
     text: str
@@ -20,21 +17,23 @@ class AnalyzeRequest(BaseModel):
     longitude: Optional[float] = None
 
 
+# ============================================================
+# 1️⃣ SENTIMENT + AUTO PRODUCT CREATION (FIXED VERSION)
+# ============================================================
 @router.post("/analyze")
 def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
 
     text = request.text
+    text_lower = text.lower()
+
     result = analyze_sentiment(text)
 
     brand = result.get("brand", "Unknown")
     sentiment = result.get("sentiment", "neutral")
     confidence = result.get("confidence", 0.5)
 
-    extracted_lat = result.get("latitude", 0)
-    extracted_lon = result.get("longitude", 0)
-
-    lat = request.latitude if request.latitude is not None else extracted_lat
-    lon = request.longitude if request.longitude is not None else extracted_lon
+    lat = request.latitude
+    lon = request.longitude
 
     # 1️⃣ Insert into social_posts
     new_post = models.SocialPost(
@@ -47,28 +46,44 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
     )
     db.add(new_post)
 
-    # 2️⃣ Auto-create product if not exists
+    # 2️⃣ Try exact model match first (VERY IMPORTANT)
     product = db.query(models.Product).filter(
-        models.Product.company.ilike(f"%{brand}%")
+        func.lower(models.Product.model_name) == text_lower
     ).first()
 
+    # 3️⃣ If not exact, try partial match
     if not product:
+        product = db.query(models.Product).filter(
+            func.lower(models.Product.model_name).contains(text_lower)
+        ).first()
+
+    # 4️⃣ If still not found → create new model using first 2 words
+    if not product and brand != "Unknown":
+        words = text.split()
+
+        # Extract model name smartly
+        if len(words) >= 2:
+            model_name = f"{words[0]} {words[1]}"
+        else:
+            model_name = f"{brand} Model"
+
         product = models.Product(
-            model_name=f"{brand} Auto Model",
-            company=brand,
+            model_name=model_name.title(),
+            company=brand.title(),
             current_price=0
         )
         db.add(product)
-        db.flush()   # get product.id immediately
+        db.flush()
 
-    # 3️⃣ Insert into reviews table
-    new_review = models.Review(
-        product_id=product.id,
-        comment=text,
-        sentiment=sentiment,
-        confidence=confidence
-    )
-    db.add(new_review)
+    # 5️⃣ Insert into reviews
+    if product:
+        new_review = models.Review(
+            product_id=product.id,
+            comment=text,
+            sentiment=sentiment,
+            confidence=confidence
+        )
+        db.add(new_review)
 
     db.commit()
 
@@ -79,26 +94,36 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
     }
 
 
-
+# ============================================================
+# 2️⃣ DEEP SCAN (IMPROVED MATCHING)
+# ============================================================
 @router.post("/analyze-product")
 def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
 
     text = request.text.lower()
 
-
+    # 🔥 Match by full model name first
     product = db.query(models.Product).filter(
-        func.lower(models.Product.company).contains(text)
+        func.lower(models.Product.model_name).contains(text)
     ).first()
 
-    # 2️⃣ If not found, try match by model name
+    # 🔥 If not found, try matching individual words
     if not product:
-        product = db.query(models.Product).filter(
-            func.lower(models.Product.model_name).contains(text)
-        ).first()
+        words = text.split()
+        for word in words:
+            product = db.query(models.Product).filter(
+                func.lower(models.Product.model_name).contains(word)
+            ).first()
+            if product:
+                break
 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found in DB")
-    
+
+    # =============================
+    # Analytics
+    # =============================
+
     total_reviews = db.query(models.Review).filter(
         models.Review.product_id == product.id
     ).count()
@@ -123,6 +148,7 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         "confidence": round(float(confidence_avg), 2)
     }
 
+    # Price history
     price_data = db.query(models.PriceHistory).filter(
         models.PriceHistory.product_id == product.id
     ).all()
@@ -132,6 +158,7 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         for p in price_data
     ]
 
+    # Availability
     availability_data = db.query(models.Availability).filter(
         models.Availability.product_id == product.id
     ).all()
@@ -141,6 +168,7 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         for a in availability_data
     ]
 
+    # Review trend
     review_trend_raw = db.query(
         func.to_char(models.Review.created_at, 'Mon').label("month"),
         func.count(models.Review.id).label("count")
@@ -153,13 +181,12 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         for r in review_trend_raw
     ]
 
-
+    # Top topics
     reviews = db.query(models.Review.comment).filter(
         models.Review.product_id == product.id
     ).all()
 
     all_text = " ".join([r[0] for r in reviews]).lower()
-
     words = re.findall(r'\b[a-z]{4,}\b', all_text)
 
     stopwords = {
@@ -169,7 +196,6 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
     }
 
     filtered_words = [w for w in words if w not in stopwords]
-
     word_counts = Counter(filtered_words).most_common(5)
 
     top_topics = [

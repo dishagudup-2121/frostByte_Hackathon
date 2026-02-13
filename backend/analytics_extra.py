@@ -139,3 +139,65 @@ def company_summary(company: str, db: Session = Depends(get_db)):
         "best_model": best_model,
         "worst_model": worst_model
     }
+
+@router.get("/compare")
+def compare_products(model1: str, model2: str, db: Session = Depends(get_db)):
+
+    # 🔎 Find products
+    product1 = db.query(models.Product).filter(
+        models.Product.model_name.ilike(f"%{model1}%")
+    ).first()
+
+    product2 = db.query(models.Product).filter(
+        models.Product.model_name.ilike(f"%{model2}%")
+    ).first()
+
+    if not product1 or not product2:
+        raise HTTPException(status_code=404, detail="One or both products not found")
+
+    def get_stats(product):
+        total = db.query(models.Review).filter(
+            models.Review.product_id == product.id
+        ).count()
+
+        positive = db.query(models.Review).filter(
+            models.Review.product_id == product.id,
+            models.Review.sentiment == "positive"
+        ).count()
+
+        negative = db.query(models.Review).filter(
+            models.Review.product_id == product.id,
+            models.Review.sentiment == "negative"
+        ).count()
+
+        avg_confidence = db.query(func.avg(models.Review.confidence)).filter(
+            models.Review.product_id == product.id
+        ).scalar() or 0
+
+        return {
+            "model_name": product.model_name,
+            "company": product.company,
+            "current_price": product.current_price,
+            "total_reviews": total,
+            "positive_percent": int((positive / total) * 100) if total else 0,
+            "negative_percent": int((negative / total) * 100) if total else 0,
+            "avg_confidence": round(float(avg_confidence), 2)
+        }
+
+    stats1 = get_stats(product1)
+    stats2 = get_stats(product2)
+
+    # 🏆 Decide better model (based on positive %)
+    better_model = (
+        stats1["model_name"]
+        if stats1["positive_percent"] > stats2["positive_percent"]
+        else stats2["model_name"]
+    )
+
+    return {
+        "comparison": {
+            "model1": stats1,
+            "model2": stats2,
+            "better_model": better_model
+        }
+    }
