@@ -85,6 +85,31 @@ def brand_sentiment_ratio(db: Session = Depends(get_db)):
     return list(data.values())
 
 
+
+@router.get("/product/{id}/reviews")
+def get_product_reviews(id: int, sentiment: str = None, db: Session = Depends(get_db)):
+    
+    query = db.query(models.Review).filter(models.Review.product_id == id)
+
+    if sentiment:
+        query = query.filter(models.Review.sentiment == sentiment)
+
+    reviews = query.all()
+
+    if not reviews:
+        raise HTTPException(status_code=404, detail="No reviews found")
+
+    return [
+        {
+            "comment": r.comment,
+            "sentiment": r.sentiment,
+            "confidence": r.confidence
+        }
+        for r in reviews
+    ]
+
+
+
 @router.get("/company-summary/{company}")
 def company_summary(company: str, db: Session = Depends(get_db)):
 
