@@ -14,6 +14,14 @@ export default function ProductDetails({ onDataReceived }) {
     try {
       const res = await analyzeProduct(comment);
       onDataReceived(res.data);
+      {result?.model_name && (
+  <div>
+    <h2>{result.model_name}</h2>
+    <p>{result.company}</p>
+    <p>₹ {result.current_price}</p>
+  </div>
+)}
+
     } catch (err) {
       setError("Failed to retrieve deep insights. Check connection.");
     } finally {
