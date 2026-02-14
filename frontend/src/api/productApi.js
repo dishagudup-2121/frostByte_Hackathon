@@ -18,3 +18,7 @@ export const compareProducts = (model1, model2) =>
   axios.get("http://127.0.0.1:8000/analytics/compare", {
     params: { model1, model2 }
   });
+
+export const getCompanySummary = (company) =>
+  axios.get(`${BASE_URL}/analytics/company-summary/${company}`);
+

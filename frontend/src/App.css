@@ -215,3 +215,92 @@ body {
 .sentiment-summary p {
   margin: 6px 0;
 }
+
+/* Container alignment */
+.company-insights-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin: 40px 0;
+}
+
+/* Glass card */
+.company-insights-card {
+  position: relative;
+  padding: 28px 32px;
+  border-radius: 22px;
+  width: 320px;
+
+  background: rgba(18, 22, 45, 0.55);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.45),
+    inset 0 0 15px rgba(255,255,255,0.03);
+
+  transition: all 0.3s ease;
+}
+
+/* Glow effect behind */
+.company-insights-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 24px;
+  z-index: -1;
+
+  background: linear-gradient(
+    135deg,
+    rgba(99,102,241,0.6),
+    rgba(0,242,255,0.5)
+  );
+
+  filter: blur(28px);
+  opacity: 0.55;
+}
+
+/* Hover lift */
+.company-insights-card:hover {
+  transform: translateY(-6px) scale(1.01);
+}
+
+/* Button */
+.company-insights-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+
+  background: linear-gradient(135deg,#6366f1,#00f2ff);
+  color: white;
+  font-weight: 600;
+  letter-spacing: .4px;
+
+  box-shadow: 0 6px 20px rgba(0,242,255,0.25);
+  transition: 0.25s ease;
+}
+
+.company-insights-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(0,242,255,0.35);
+}
+
+/* Data text */
+.company-insights-data {
+  margin-top: 22px;
+  font-size: 15px;
+  color: rgba(255,255,255,0.85);
+}
+
+.company-insights-data p {
+  margin: 10px 0;
+}
+
+/* Highlight numbers */
+.company-insights-data span {
+  color: #00f2ff;
+  font-weight: 600;
+}
+

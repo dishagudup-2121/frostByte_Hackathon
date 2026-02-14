@@ -107,6 +107,41 @@ def get_product_reviews(id: int, sentiment: str = None, db: Session = Depends(ge
         }
         for r in reviews
     ]
+@router.get("/company-summary/{company}")
+def company_summary(company: str, db: Session = Depends(get_db)):
+
+    products = db.query(models.Product).filter(
+        func.lower(models.Product.company) == company.lower()
+    ).all()
+
+    if not products:
+        return {"error": "Company not found"}
+
+    product_ids = [p.id for p in products]
+
+    total_models = len(products)
+
+    total_reviews = db.query(models.Review).filter(
+        models.Review.product_id.in_(product_ids)
+    ).count()
+
+    positive_reviews = db.query(models.Review).filter(
+        models.Review.product_id.in_(product_ids),
+        models.Review.sentiment == "positive"
+    ).count()
+
+    overall_positive = (
+        int((positive_reviews / total_reviews) * 100)
+        if total_reviews else 0
+    )
+
+    return {
+        "company": company,
+        "total_models": total_models,
+        "total_reviews": total_reviews,
+        "overall_positive_percent": overall_positive
+    }
+
 
 
 
@@ -226,3 +261,38 @@ def compare_products(model1: str, model2: str, db: Session = Depends(get_db)):
             "better_model": better_model
         }
     }
+
+@router.get("/company-model-insights/{company}")
+def company_model_insights(company: str, db: Session = Depends(get_db)):
+
+    products = db.query(models.Product).filter(
+        func.lower(models.Product.company) == company.lower()
+    ).all()
+
+    response = []
+
+    for product in products:
+        total = db.query(models.Review).filter(
+            models.Review.product_id == product.id
+        ).count()
+
+        positive = db.query(models.Review).filter(
+            models.Review.product_id == product.id,
+            models.Review.sentiment == "positive"
+        ).count()
+
+        negative = db.query(models.Review).filter(
+            models.Review.product_id == product.id,
+            models.Review.sentiment == "negative"
+        ).count()
+
+        response.append({
+            "model": product.model_name,
+            "total_reviews": total,
+            "positive": positive,
+            "negative": negative,
+            "positive_percent":
+                int((positive/total)*100) if total else 0
+        })
+
+    return response

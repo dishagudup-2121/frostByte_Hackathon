@@ -11,7 +11,7 @@ export default function ProductDetails({ onDataReceived }) {
   const [result, setResult] = useState(null);
   const [typedVerdict, setTypedVerdict] = useState("");
 
-  // 🔥 Typing Animation
+  // ✅ Typing animation for AI verdict
   useEffect(() => {
     if (!result?.ai_verdict) return;
 
@@ -28,6 +28,7 @@ export default function ProductDetails({ onDataReceived }) {
     return () => clearInterval(interval);
   }, [result]);
 
+  // ✅ Single correct analyze function
   const handleAnalyze = async () => {
     if (!modelInput.trim()) return;
 
@@ -53,11 +54,13 @@ export default function ProductDetails({ onDataReceived }) {
   return (
     <div className="product-insight-section">
       <div className="card glass-card anim-up">
+
         <h3>
           <span className="text-gradient">Deep Dive</span> Engine
         </h3>
         <p className="subtitle">Detailed Model & Market Intelligence</p>
 
+        {/* INPUT */}
         <div className="input-group-premium">
           <input
             className="premium-input"
@@ -65,6 +68,7 @@ export default function ProductDetails({ onDataReceived }) {
             onChange={(e) => setModelInput(e.target.value)}
             placeholder="Type model name (e.g., Tata Nexon)..."
           />
+
           <button
             className="premium-btn"
             onClick={handleAnalyze}
@@ -77,38 +81,41 @@ export default function ProductDetails({ onDataReceived }) {
         {error && <p className="error-text">{error}</p>}
         {loading && <LoadingSkeleton />}
 
+        {/* RESULT SECTION */}
         {result && !loading && (
           <div className="result-section">
 
             <h2>{result.model_name}</h2>
             <p className="text-muted">{result.company}</p>
 
-            {/* 💰 PRICE */}
+            {/* PRICE */}
             <div className="price-box">
-              <strong>Current Price:</strong>{" "}
-              ₹ {result.current_price?.toLocaleString()}
+              <strong>Current Price:</strong> ₹{" "}
+              {result.current_price?.toLocaleString()}
             </div>
 
-            {/* 📊 MINI PIE CHART */}
-            <div className="mini-chart">
-              <h4>Sentiment Split</h4>
-              <Pie
-                data={{
-                  labels: ["Positive", "Negative"],
-                  datasets: [
-                    {
-                      data: [
-                        result.sentiment_summary?.positive_percent,
-                        result.sentiment_summary?.negative_percent,
-                      ],
-                      backgroundColor: ["#22c55e", "#ef4444"],
-                    },
-                  ],
-                }}
-              />
-            </div>
+            {/* PIE CHART */}
+            {result.sentiment_summary && (
+              <div className="mini-chart">
+                <h4>Sentiment Split</h4>
+                <Pie
+                  data={{
+                    labels: ["Positive", "Negative"],
+                    datasets: [
+                      {
+                        data: [
+                          result.sentiment_summary.positive_percent || 0,
+                          result.sentiment_summary.negative_percent || 0,
+                        ],
+                        backgroundColor: ["#22c55e", "#ef4444"],
+                      },
+                    ],
+                  }}
+                />
+              </div>
+            )}
 
-            {/* 📡 MINI FINGERPRINT RADAR */}
+            {/* FINGERPRINT RADAR */}
             {result.fingerprint && (
               <div className="mini-chart">
                 <h4>Topic Fingerprint</h4>
@@ -124,16 +131,14 @@ export default function ProductDetails({ onDataReceived }) {
                     ],
                   }}
                   options={{
-                    scales: {
-                      r: { min: 0, max: 100 },
-                    },
+                    scales: { r: { min: 0, max: 100 } },
                   }}
                 />
               </div>
             )}
 
-            {/* 📈 PRICE TREND */}
-            {result.price_history && result.price_history.length > 0 && (
+            {/* PRICE TREND */}
+            {result.price_history?.length > 0 && (
               <div className="mini-chart">
                 <h4>Price Trend</h4>
                 <Line
@@ -152,7 +157,7 @@ export default function ProductDetails({ onDataReceived }) {
               </div>
             )}
 
-            {/* 🧠 AI VERDICT */}
+            {/* AI VERDICT */}
             <div className="verdict-box">
               <h4>AI Market Verdict</h4>
               <p>{typedVerdict}</p>
@@ -162,6 +167,7 @@ export default function ProductDetails({ onDataReceived }) {
 
           </div>
         )}
+
       </div>
     </div>
   );
