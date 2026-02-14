@@ -174,6 +174,11 @@ export default function Dashboard() {
           <button className="export-btn" onClick={exportPDF}>
             Export PDF
           </button>
+          <button onClick={() => navigate("/competitive")}>
+            Competitive Intelligence
+            </button>
+
+          
         </header>
 
         {/* Input Section */}

@@ -296,3 +296,30 @@ def company_model_insights(company: str, db: Session = Depends(get_db)):
         })
 
     return response
+
+@router.get("/market-sentiment-share")
+def market_sentiment_share(db: Session = Depends(get_db)):
+
+    results = (
+        db.query(
+            models.Product.company.label("brand"),
+            func.count(models.Review.id).label("positive_count")
+        )
+        .join(models.Review, models.Review.product_id == models.Product.id)
+        .filter(func.lower(models.Review.sentiment) == "positive")
+        .group_by(models.Product.company)
+        .all()
+    )
+
+    total_positive = sum(r.positive_count for r in results)
+
+    return [
+        {
+            "brand": r.brand,
+            "sentiment_share": round((r.positive_count / total_positive) * 100, 2)
+        }
+        for r in results
+    ]
+
+
+
