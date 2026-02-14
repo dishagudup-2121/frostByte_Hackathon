@@ -7,7 +7,6 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 import ProductDetails from "./ProductDetails";
-import ReviewPanels from "./ReviewSummaryCards";
 import ProductComparison from "./ProductComparison";
 
 import "leaflet/dist/leaflet.css";
@@ -21,19 +20,42 @@ export default function Dashboard() {
   const reportRef = useRef();
 
   const [text, setText] = useState("");
-
-  // 🔥 Separate states
-  const [sentimentResult, setSentimentResult] = useState(null);
   const [productResult, setProductResult] = useState(null);
-
   const [brandData, setBrandData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
 
-  const [radarScores, setRadarScores] = useState(new Array(10).fill(25));
+  const TOPICS = [
+    "mileage",
+    "engine",
+    "service",
+    "price",
+    "comfort",
+    "performance",
+    "design",
+    "safety",
+    "features",
+    "other",
+  ];
 
+  const [radarScores, setRadarScores] = useState(new Array(10).fill(0));
+
+  // 🔥 Brand Colors
+  const brandColors = {
+    BMW: "#00f2ff",
+    Tata: "#ff0055",
+    Hyundai: "#fbff00",
+    Mahindra: "#8b5cf6",
+    Toyota: "#22c55e",
+    Honda: "#ef4444",
+  };
+
+  // ==========================================================
+  // Load initial analytics + map history
+  // ==========================================================
   useEffect(() => {
     fetchAnalytics();
+    fetchMapHistory();
   }, []);
 
   const fetchAnalytics = async () => {
@@ -41,40 +63,48 @@ export default function Dashboard() {
       const res = await axios.get(`${API}/analytics/brand-summary`);
       setBrandData(res.data);
     } catch (err) {
-      console.error("Sync Error:", err);
+      console.error("Analytics Error:", err);
     }
   };
 
-  const updateRadar = (data) => {
-    const TOPICS = [
-      "mileage",
-      "engine",
-      "service",
-      "price",
-      "comfort",
-      "performance",
-      "design",
-      "safety",
-      "features",
-      "other",
-    ];
+  const fetchMapHistory = async () => {
+    try {
+      const res = await axios.get(`${API}/posts`);
+      const formatted = res.data.map((item) => ({
+        ...item,
+        lat: item.latitude,
+        lng: item.longitude,
+        markerColor: brandColors[item.brand] || "#ffffff",
+      }));
+      setHistory(formatted);
+    } catch (err) {
+      console.error("Map Load Error:", err);
+    }
+  };
 
-    const topic = (data.key_topic || "other").toLowerCase();
-    const index = TOPICS.indexOf(topic);
-    const scores = new Array(10).fill(25);
+  // ==========================================================
+  // 🔥 NEW Intelligent Radar Logic (Fingerprint Based)
+  // ==========================================================
+  useEffect(() => {
+    if (productResult?.fingerprint?.length > 0) {
+      const scores = new Array(TOPICS.length).fill(0);
 
-    if (index !== -1) {
-      scores[index] =
-        data.sentiment === "positive"
-          ? 100
-          : data.sentiment === "negative"
-          ? 15
-          : 60;
+      productResult.fingerprint.forEach((item) => {
+        const index = TOPICS.indexOf(item.topic.toLowerCase());
+        if (index !== -1) {
+          scores[index] = item.strength;
+        }
+      });
 
       setRadarScores(scores);
+    } else {
+      setRadarScores(new Array(TOPICS.length).fill(0));
     }
-  };
+  }, [productResult]);
 
+  // ==========================================================
+  // Analyze Sentiment
+  // ==========================================================
   const analyze = async () => {
     if (!text.trim()) return;
     setLoading(true);
@@ -91,19 +121,13 @@ export default function Dashboard() {
           ...res.data,
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
+          markerColor: brandColors[res.data.brand] || "#ffffff",
           time: new Date().toLocaleTimeString(),
-          markerColor:
-            res.data.sentiment === "positive"
-              ? "#00f2ff"
-              : res.data.sentiment === "negative"
-              ? "#ff0055"
-              : "#fbff00",
         };
 
-        setSentimentResult(newData);
         setHistory((prev) => [newData, ...prev]);
-        updateRadar(res.data);
         fetchAnalytics();
+        setText("");
       } catch (err) {
         console.error("Analysis failed:", err);
       } finally {
@@ -112,13 +136,16 @@ export default function Dashboard() {
     });
   };
 
+  // ==========================================================
+  // Export PDF
+  // ==========================================================
   const exportPDF = () => {
     const input = reportRef.current;
     html2canvas(input, { scale: 2, useCORS: true }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
       pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
-      pdf.save("GeoDrive_Command_Report.pdf");
+      pdf.save("GeoDrive_Report.pdf");
     });
   };
 
@@ -129,14 +156,11 @@ export default function Dashboard() {
       <main className="dashboard-container-v3" ref={reportRef}>
         {/* Header */}
         <header className="header-top anim-up">
-          <button
-            className="back-home-btn"
-            onClick={() => navigate("/")}
-          >
+          <button className="back-home-btn" onClick={() => navigate("/")}>
             Home
           </button>
 
-          <div className="header-title-group">
+          <div>
             <h1 className="hero-title-small">
               <span className="text-gradient">GeoDrive</span> Pro Dashboard
             </h1>
@@ -148,63 +172,39 @@ export default function Dashboard() {
           </button>
         </header>
 
-        {/* Neural Input */}
+        {/* Input Section */}
         <section className="card glass-card anim-up">
-          <div className="input-vertical-group">
-            <textarea
-              placeholder="Enter automotive feedback for neural mapping..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="premium-textarea"
-            />
+          <textarea
+            placeholder="Enter automotive feedback..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="premium-textarea"
+          />
 
-            <div className="btn-center-wrap">
-              <button
-                onClick={analyze}
-                className="premium-btn"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="loader-small"></span>
-                ) : (
-                  "Execute Neural Analysis"
-                )}
-              </button>
-            </div>
+          <div className="btn-center-wrap">
+            <button
+              onClick={analyze}
+              className="premium-btn"
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Execute Neural Analysis"}
+            </button>
           </div>
         </section>
 
         {/* Deep Scan */}
         <ProductDetails onDataReceived={(data) => setProductResult(data)} />
 
-        {productResult && productResult.product_id && (
-          <section className="card glass-card anim-up">
-            <h3>
-              Neural Review Comparison:{" "}
-              {productResult.model_name || "Deep Scan"}
-            </h3>
-            <ReviewPanels productId={productResult.product_id} />
-          </section>
-        )}
-
-        {/* Comparison Section */}
         <ProductComparison />
 
-        {/* Map & Activity */}
+        {/* Map + Activity */}
         <div className="mid-visual-grid anim-up">
           <div className="card map-card">
-            <h3>Sentiment Heatmap</h3>
-            <div
-              className="map-wrapper"
-              style={{
-                height: "450px",
-                borderRadius: "24px",
-                overflow: "hidden",
-              }}
-            >
+            <h3>Brand Sentiment Map</h3>
+            <div style={{ height: "450px", borderRadius: "24px", overflow: "hidden" }}>
               <MapContainer
-                center={[18.5204, 73.8567]}
-                zoom={8}
+                center={[20.5937, 78.9629]}
+                zoom={5}
                 style={{ height: "100%", width: "100%" }}
               >
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
@@ -216,17 +216,14 @@ export default function Dashboard() {
                     pathOptions={{
                       color: item.markerColor,
                       fillColor: item.markerColor,
-                      fillOpacity: 0.9,
-                      weight: 5,
+                      fillOpacity: 0.8,
                     }}
-                    radius={14}
+                    radius={8}
                   >
                     <Popup>
-                      <div style={{ color: "#000" }}>
-                        <strong>{item.brand}</strong>
-                        <br />
-                        {item.sentiment}
-                      </div>
+                      <strong>{item.brand}</strong>
+                      <br />
+                      {item.sentiment}
                     </Popup>
                   </CircleMarker>
                 ))}
@@ -234,21 +231,16 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Live Feed */}
           <div className="card log-card">
             <h3>Live Activity Feed</h3>
             <div className="history-list">
-              {history.length === 0 && (
-                <p className="text-muted">
-                  Awaiting neural input...
-                </p>
-              )}
-
               {history.map((h, i) => (
                 <div key={i} className="history-item">
                   <div className="log-header">
-                    <span>{h.time}</span>
-                    <span className={h.sentiment.toLowerCase()}>
-                      {h.sentiment.toUpperCase()}
+                    <span>{h.time || "Stored"}</span>
+                    <span className={h.sentiment?.toLowerCase()}>
+                      {h.sentiment?.toUpperCase()}
                     </span>
                   </div>
                   <strong>{h.brand}</strong>
@@ -259,27 +251,18 @@ export default function Dashboard() {
         </div>
 
         {/* Charts */}
-        <div className="bottom-charts-grid anim-up delay-1">
+        <div className="bottom-charts-grid">
           <div className="card chart-box">
-            <h3>Sentiment Fingerprint (Topic Analysis)</h3>
+            <h3>Sentiment Fingerprint</h3>
             <div className="chart-inner">
               <Radar
                 data={{
-                  labels: [
-                    "Mileage",
-                    "Engine",
-                    "Service",
-                    "Price",
-                    "Comfort",
-                    "Performance",
-                    "Design",
-                    "Safety",
-                    "Features",
-                    "Other",
-                  ],
+                  labels: TOPICS.map(
+                    (t) => t.charAt(0).toUpperCase() + t.slice(1)
+                  ),
                   datasets: [
                     {
-                      label: "Neural Score",
+                      label: "Topic Strength (%)",
                       data: radarScores,
                       backgroundColor: "rgba(99,102,241,0.2)",
                       borderColor: "#6366f1",
@@ -287,7 +270,16 @@ export default function Dashboard() {
                     },
                   ],
                 }}
-                options={{ responsive: true, maintainAspectRatio: false }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    r: {
+                      min: 0,
+                      max: 100,
+                    },
+                  },
+                }}
               />
             </div>
           </div>
