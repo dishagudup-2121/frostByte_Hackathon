@@ -397,3 +397,32 @@ body {
     font-size: 1.8rem;
   }
 }
+
+
+/* ========================= */
+/* MARKET TREND BUTTON */
+/* ========================= */
+
+.trend-btn {
+  width: 220px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #6366f1, #00f2ff);
+  color: white;
+  transition: all 0.3s ease;
+  display: block;
+  margin: 25px auto 0 auto; /* center button */
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+.trend-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(0, 242, 255, 0.5);
+}
+
+.trend-btn:active {
+  transform: scale(0.98);
+}

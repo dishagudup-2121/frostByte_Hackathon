@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.database import get_db
 from backend import models
+from datetime import datetime
 
 router = APIRouter()
 
@@ -261,6 +262,50 @@ def compare_products(model1: str, model2: str, db: Session = Depends(get_db)):
             "better_model": better_model
         }
     }
+    
+
+@router.get("/trend/{brand}")
+def brand_trend(brand: str, db: Session = Depends(get_db)):
+
+    reviews = db.query(models.Review).filter(
+        func.lower(models.Review.brand) == brand.lower()
+    ).order_by(models.Review.id.desc()).all()
+
+    if not reviews:
+        return {"message": "No data"}
+
+    # Split latest half vs older half
+    mid = len(reviews) // 2
+
+    current_reviews = reviews[:mid]
+    previous_reviews = reviews[mid:]
+
+    def calculate_sentiment(data):
+        if not data:
+            return 0
+        positive = sum(1 for r in data if r.sentiment == "positive")
+        return int((positive / len(data)) * 100)
+
+    current_percent = calculate_sentiment(current_reviews)
+    previous_percent = calculate_sentiment(previous_reviews)
+
+    change = current_percent - previous_percent
+
+    if change > 5:
+        trend = "upward"
+    elif change < -5:
+        trend = "downward"
+    else:
+        trend = "stable"
+
+    return {
+        "brand": brand,
+        "current_percent": current_percent,
+        "previous_percent": previous_percent,
+        "change_percent": change,
+        "trend_direction": trend
+    }
+
 
 @router.get("/company-model-insights/{company}")
 def company_model_insights(company: str, db: Session = Depends(get_db)):
