@@ -11,7 +11,22 @@ from ai_module.ai_module import (
     generate_ai_verdict
 )
 from collections import Counter
-import re
+import random
+
+# Demo city coordinates (India major cities)
+DEFAULT_LOCATIONS = [
+    (19.0760, 72.8777),  # Mumbai
+    (28.6139, 77.2090),  # Delhi
+    (12.9716, 77.5946),  # Bangalore
+    (13.0827, 80.2707),  # Chennai
+    (17.3850, 78.4867),  # Hyderabad
+    (22.5726, 88.3639),  # Kolkata
+    (18.5204, 73.8567),  # Pune
+    (23.0225, 72.5714),  # Ahmedabad
+    (26.9124, 75.7873),  # Jaipur
+    (21.1458, 79.0882),  # Nagpur
+]
+
 
 router = APIRouter()
 
@@ -23,13 +38,14 @@ class AnalyzeRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
+
 # ============================================================
-# 1️⃣ SENTIMENT + AUTO PRODUCT CREATION (SMART PRICE)
+# 1️⃣ SENTIMENT + SMART PRODUCT LINKING
 # ============================================================
 @router.post("/analyze")
 def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
 
-    text = request.text
+    text = request.text.strip()
     text_lower = text.lower()
 
     result = analyze_sentiment(text)
@@ -41,7 +57,12 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
     lat = request.latitude
     lon = request.longitude
 
-    # Insert into social_posts
+    # If location not provided, assign random demo city
+    if not lat or not lon:
+        lat, lon = random.choice(DEFAULT_LOCATIONS)
+
+
+    # ✅ Store Social Post
     new_post = models.SocialPost(
         brand=brand,
         text=text,
@@ -52,12 +73,21 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
     )
     db.add(new_post)
 
-    # 🔍 Try product match
-    product = db.query(models.Product).filter(
-        func.lower(models.Product.model_name).contains(text_lower)
-    ).first()
+    # =========================================================
+    # 🔥 SMART PRODUCT MATCH
+    # Instead of matching full sentence,
+    # check if any existing model name exists inside text
+    # =========================================================
 
-    # 🔥 Auto create with REAL PRICE
+    products = db.query(models.Product).all()
+    product = None
+
+    for p in products:
+        if p.model_name.lower() in text_lower:
+            product = p
+            break
+
+    # 🔥 If not found → create using first 2 words
     if not product and brand != "Unknown":
         words = text.split()
         model_name = " ".join(words[:2]).title()
@@ -72,13 +102,18 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
         db.add(product)
         db.flush()
 
-    # Insert review
+    # =========================================================
+    # ✅ ALWAYS INSERT REVIEW IF PRODUCT EXISTS
+    # =========================================================
     if product:
         new_review = models.Review(
             product_id=product.id,
             comment=text,
             sentiment=sentiment,
-            confidence=confidence
+            confidence=confidence,
+            latitude=lat,
+            longitude=lon,
+            brand=brand.title()
         )
         db.add(new_review)
 
@@ -90,16 +125,18 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
         "longitude": lon
     }
 
+
 # ============================================================
-# 2️⃣ DEEP SCAN WITH AGGREGATED FINGERPRINT + AI VERDICT
+# 2️⃣ DEEP SCAN (ROBUST VERSION)
 # ============================================================
 @router.post("/analyze-product")
 def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
 
-    text = request.text.lower()
+    search_text = request.text.strip().lower()
 
+    # 🔥 Flexible search
     product = db.query(models.Product).filter(
-        func.lower(models.Product.model_name).contains(text)
+        func.lower(models.Product.model_name).contains(search_text)
     ).first()
 
     if not product:
@@ -129,12 +166,10 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         "confidence": round(float(confidence_avg), 2)
     }
 
-    # ========================================================
-    # 🔥 SMART FINGERPRINT (Topic Aggregation)
-    # ========================================================
-
+    # =========================================================
+    # 🔥 Topic Fingerprint (Recalculated Live)
+    # =========================================================
     reviews = reviews_query.all()
-
     topic_counter = Counter()
 
     for review in reviews:
@@ -143,6 +178,7 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
         topic_counter[topic] += 1
 
     fingerprint = []
+
     for topic, count in topic_counter.items():
         percentage = int((count / total_reviews) * 100) if total_reviews else 0
         fingerprint.append({
@@ -150,10 +186,9 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
             "strength": percentage
         })
 
-    # ========================================================
-    # 🔥 AI VERDICT (Correct way)
-    # ========================================================
-
+    # =========================================================
+    # 🔥 AI Verdict
+    # =========================================================
     verdict = "Not enough data for verdict."
 
     if total_reviews > 0:
@@ -162,10 +197,6 @@ def analyze_product(request: AnalyzeRequest, db: Session = Depends(get_db)):
             sentiment_summary["positive_percent"],
             sentiment_summary["negative_percent"]
         )
-
-    # ========================================================
-    # Return Data
-    # ========================================================
 
     return {
         "product_id": product.id,

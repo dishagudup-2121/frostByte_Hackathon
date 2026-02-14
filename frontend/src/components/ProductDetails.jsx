@@ -11,24 +11,28 @@ export default function ProductDetails({ onDataReceived }) {
   const [result, setResult] = useState(null);
   const [typedVerdict, setTypedVerdict] = useState("");
 
-  // ✅ Typing animation for AI verdict
+  // Typing animation
   useEffect(() => {
     if (!result?.ai_verdict) return;
 
-    let i = 0;
+    let index = 0;
     setTypedVerdict("");
-    const text = result.ai_verdict;
+    const fullText = result.ai_verdict;
 
     const interval = setInterval(() => {
-      setTypedVerdict((prev) => prev + text[i]);
-      i++;
-      if (i >= text.length) clearInterval(interval);
-    }, 25);
+      setTypedVerdict(fullText.slice(0, index + 1));
+      index++;
+
+      if (index >= fullText.length) {
+        clearInterval(interval);
+      }
+    }, 20);
 
     return () => clearInterval(interval);
   }, [result]);
 
-  // ✅ Single correct analyze function
+
+
   const handleAnalyze = async () => {
     if (!modelInput.trim()) return;
 
@@ -54,7 +58,6 @@ export default function ProductDetails({ onDataReceived }) {
   return (
     <div className="product-insight-section">
       <div className="card glass-card anim-up">
-
         <h3>
           <span className="text-gradient">Deep Dive</span> Engine
         </h3>
@@ -66,7 +69,7 @@ export default function ProductDetails({ onDataReceived }) {
             className="premium-input"
             value={modelInput}
             onChange={(e) => setModelInput(e.target.value)}
-            placeholder="Type model name (e.g., Tata Nexon)..."
+            placeholder="Type model name (e.g., BMW X5)..."
           />
 
           <button
@@ -81,93 +84,168 @@ export default function ProductDetails({ onDataReceived }) {
         {error && <p className="error-text">{error}</p>}
         {loading && <LoadingSkeleton />}
 
-        {/* RESULT SECTION */}
+        {/* ================= RESULT ================= */}
         {result && !loading && (
           <div className="result-section">
 
             <h2>{result.model_name}</h2>
             <p className="text-muted">{result.company}</p>
 
-            {/* PRICE */}
             <div className="price-box">
               <strong>Current Price:</strong> ₹{" "}
               {result.current_price?.toLocaleString()}
             </div>
 
-            {/* PIE CHART */}
-            {result.sentiment_summary && (
-              <div className="mini-chart">
+            {/* ================= CHARTS ================= */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "40px",
+                marginTop: "40px",
+                alignItems: "start"
+              }}
+            >
+
+              {/* PIE */}
+              <div style={{ minHeight: "280px" }}>
                 <h4>Sentiment Split</h4>
-                <Pie
-                  data={{
-                    labels: ["Positive", "Negative"],
-                    datasets: [
-                      {
-                        data: [
-                          result.sentiment_summary.positive_percent || 0,
-                          result.sentiment_summary.negative_percent || 0,
-                        ],
-                        backgroundColor: ["#22c55e", "#ef4444"],
-                      },
-                    ],
-                  }}
-                />
+                <div style={{ height: "250px" }}>
+                  <Pie
+                    data={{
+                      labels: ["Positive", "Negative"],
+                      datasets: [
+                        {
+                          data: [
+                            result.sentiment_summary?.positive_percent || 0,
+                            result.sentiment_summary?.negative_percent || 0,
+                          ],
+                          backgroundColor: ["#22c55e", "#ef4444"],
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                    }}
+                  />
+                </div>
               </div>
-            )}
 
-            {/* FINGERPRINT RADAR */}
-            {result.fingerprint && (
-              <div className="mini-chart">
-                <h4>Topic Fingerprint</h4>
-                <Radar
-                  data={{
-                    labels: result.fingerprint.map((f) => f.topic),
-                    datasets: [
-                      {
-                        data: result.fingerprint.map((f) => f.strength),
-                        backgroundColor: "rgba(99,102,241,0.2)",
-                        borderColor: "#6366f1",
+             {/* RADAR */}
+              <div style={{ minHeight: "320px" }}>
+                <h4 style={{ marginBottom: "15px" }}>Topic Fingerprint</h4>
+
+                <div style={{ height: "280px" }}>
+                  <Radar
+                    data={{
+                      labels: result.fingerprint?.map((f) =>
+                        f.topic.charAt(0).toUpperCase() + f.topic.slice(1)
+                      ) || [],
+                      datasets: [
+                        {
+                          label: "Strength %",
+                          data:
+                            result.fingerprint?.map((f) => f.strength) || [],
+                          backgroundColor: "rgba(99,102,241,0.15)",
+                          borderColor: "#6366f1",
+                          borderWidth: 2,
+                          pointBackgroundColor: "#00f2ff",
+                          pointBorderColor: "#ffffff",
+                          pointRadius: 4,
+                          pointHoverRadius: 6,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          display: false,
+                        },
                       },
-                    ],
-                  }}
-                  options={{
-                    scales: { r: { min: 0, max: 100 } },
-                  }}
-                />
-              </div>
-            )}
-
-            {/* PRICE TREND */}
-            {result.price_history?.length > 0 && (
-              <div className="mini-chart">
-                <h4>Price Trend</h4>
-                <Line
-                  data={{
-                    labels: result.price_history.map((p) => p.month),
-                    datasets: [
-                      {
-                        label: "Price",
-                        data: result.price_history.map((p) => p.price),
-                        borderColor: "#00f2ff",
-                        fill: false,
+                      scales: {
+                        r: {
+                          min: 0,
+                          max: 100,
+                          ticks: {
+                            stepSize: 20,
+                            backdropColor: "transparent",
+                            color: "#94a3b8",
+                            font: {
+                              size: 11,
+                            },
+                          },
+                          grid: {
+                            color: "rgba(255,255,255,0.08)",
+                          },
+                          angleLines: {
+                            color: "rgba(255,255,255,0.08)",
+                          },
+                          pointLabels: {
+                            color: "#ffffff",
+                            font: {
+                              size: 13,
+                              weight: "600",
+                            },
+                          },
+                        },
                       },
-                    ],
-                  }}
-                />
+                    }}
+                  />
+                </div>
               </div>
-            )}
 
-            {/* AI VERDICT */}
-            <div className="verdict-box">
-              <h4>AI Market Verdict</h4>
-              <p>{typedVerdict}</p>
             </div>
 
-            <p>Total Reviews: {result.total_reviews}</p>
+            {/* ================= PRICE TREND ================= */}
+            {result.price_history?.length > 0 && (
+              <div style={{ marginTop: "50px" }}>
+                <h4>Price Trend</h4>
+                <div style={{ height: "260px" }}>
+                  <Line
+                    data={{
+                      labels: result.price_history.map((p) => p.month),
+                      datasets: [
+                        {
+                          label: "Price",
+                          data: result.price_history.map((p) => p.price),
+                          borderColor: "#00f2ff",
+                          tension: 0.3,
+                          fill: false,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* ================= VERDICT ================= */}
+            <div
+              className="verdict-box"
+              style={{
+                marginTop: "50px",
+                padding: "25px",
+                position: "relative",
+                zIndex: 2
+              }}
+            >
+              <h4>AI Market Verdict</h4>
+              <p style={{ lineHeight: "1.6" }}>{typedVerdict}</p>
+            </div>
+
+            <p style={{ marginTop: "20px" }}>
+              Total Reviews: {result.total_reviews}
+            </p>
 
           </div>
         )}
-
       </div>
     </div>
   );

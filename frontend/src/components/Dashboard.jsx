@@ -46,12 +46,12 @@ export default function Dashboard() {
 
   // 🔥 Brand Colors
   const brandColors = {
-    BMW: "#00f2ff",
-    Tata: "#ff0055",
-    Hyundai: "#fbff00",
-    Mahindra: "#8b5cf6",
-    Toyota: "#22c55e",
-    Honda: "#ef4444",
+    BMW: "#116569",
+    Tata: "#e11a5c",
+    Hyundai: "#d5d818",
+    Mahindra: "#814ff5",
+    Toyota: "#20b858",
+    Honda: "#f55c5c",
   };
 
   // ==========================================================
@@ -283,13 +283,48 @@ export default function Dashboard() {
                 options={{
                   responsive: true,
                   maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      labels: {
+                        color: "#ffffff",
+                        font: {
+                          size: 13,
+                          weight: "600",
+                        },
+                      },
+                    },
+                  },
                   scales: {
                     r: {
                       min: 0,
                       max: 100,
+                      ticks: {
+                        stepSize: 20,
+                        display:false,
+                        color: "#94a3b8",
+                        backdropColor: "transparent", // ❌ removes grey boxes
+                        font: {
+                          size: 11,
+                          weight: "500",
+                        },
+                      },
+                      grid: {
+                        color: "rgba(255,255,255,0.08)",
+                      },
+                      angleLines: {
+                        color: "rgba(255,255,255,0.1)",
+                      },
+                      pointLabels: {
+                        color: "#e2e8f0",
+                        font: {
+                          size: 13,
+                          weight: "600",
+                        },
+                      },
                     },
                   },
                 }}
+
               />
             </div>
           </div>
@@ -317,4 +352,4 @@ export default function Dashboard() {
       </main>
     </div>
   );
-}
+} 

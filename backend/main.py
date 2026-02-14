@@ -13,6 +13,9 @@ from fastapi.middleware.cors import CORSMiddleware
 # ============================================================
 # APP INIT
 # ============================================================
+print("Creating tables...")
+models.Base.metadata.create_all(bind=engine)
+print("Tables created.")
 
 app = FastAPI(title="GeoDrive Insight API")
 
@@ -27,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-models.Base.metadata.create_all(bind=engine)
+
 
 
 # ============================================================

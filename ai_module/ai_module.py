@@ -195,21 +195,33 @@ def fetch_model_price(model_name: str):
 # Generate Dynamic Verdict
 # ============================================================
 
-def generate_ai_verdict(model_name, positive_pct, negative_pct):
-    try:
-        response = client.chat.complete(
-            model="mistral-large-latest",
-            messages=[{
-                "role": "user",
-                "content": build_verdict_prompt(
-                    model_name,
-                    positive_pct,
-                    negative_pct
-                )
-            }]
+def generate_ai_verdict(model_name, positive_percent, negative_percent):
+
+    if positive_percent >= 75:
+        return (
+            f"The {model_name} demonstrates strong market approval, "
+            f"with overwhelmingly positive sentiment from owners. "
+            f"It stands out for reliability, refinement, and overall value, "
+            f"making it a top-tier choice within its segment."
         )
 
-        return response.choices[0].message.content.strip()
+    elif positive_percent >= 55:
+        return (
+            f"The {model_name} maintains a solid reputation in the market. "
+            f"While most feedback is positive, there are areas where customer expectations "
+            f"could be better addressed. Overall, it remains a competitive offering."
+        )
 
-    except Exception:
-        return "Overall performance appears balanced based on current user feedback."
+    elif negative_percent > 50:
+        return (
+            f"The {model_name} faces noticeable market concerns, "
+            f"with a significant portion of reviews highlighting drawbacks. "
+            f"Potential buyers should carefully evaluate user feedback before purchase."
+        )
+
+    else:
+        return (
+            f"The {model_name} shows mixed market sentiment. "
+            f"Customer experiences vary, suggesting balanced strengths and weaknesses "
+            f"across performance, comfort, and ownership factors."
+        )

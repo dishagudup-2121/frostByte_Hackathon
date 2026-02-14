@@ -12,8 +12,8 @@ class SocialPost(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    brand = Column(String, index=True)
-    text = Column(String)
+    brand = Column(String, index=True, nullable=False)
+    text = Column(String, nullable=False)
 
     latitude = Column(Float, index=True)
     longitude = Column(Float, index=True)
@@ -32,35 +32,60 @@ class Product(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    model_name = Column(String, index=True)
-    company = Column(String, index=True)
+    model_name = Column(String, index=True, nullable=False)
+    company = Column(String, index=True, nullable=False)
 
     current_price = Column(Float, default=0)
 
-    # Relationships
-    reviews = relationship("Review", back_populates="product", cascade="all, delete")
-    price_history = relationship("PriceHistory", back_populates="product", cascade="all, delete")
-    availability = relationship("Availability", back_populates="product", cascade="all, delete")
+    # 🔥 Relationships
+    reviews = relationship(
+        "Review",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    price_history = relationship(
+        "PriceHistory",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    availability = relationship(
+        "Availability",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
 
 
 # ============================================================
-# REVIEWS (Linked to Product + Location for Map Persistence)
+# REVIEWS (Linked to Product + Location for Map + Company Insights)
 # ============================================================
 class Review(Base):
     __tablename__ = "reviews"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    product_id = Column(Integer, ForeignKey("products.id"))
+    product_id = Column(
+        Integer,
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
 
-    comment = Column(String)
-    sentiment = Column(String, index=True)  # positive / negative / neutral
+    comment = Column(String, nullable=False)
+
+    sentiment = Column(String, index=True)   # positive / negative / neutral
     confidence = Column(Float)
 
-    # 🔥 NEW → Store location per review for persistent map
+    # 🌍 Location (for review map endpoint)
     latitude = Column(Float, index=True)
     longitude = Column(Float, index=True)
-    brand = Column(String, index=True)  # helps for brand color mapping
+
+    # 🚀 Important for company insights & fast aggregation
+    brand = Column(String, index=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -68,14 +93,20 @@ class Review(Base):
 
 
 # ============================================================
-# PRICE HISTORY
+# PRICE HISTORY (Optional - For trend charts)
 # ============================================================
 class PriceHistory(Base):
     __tablename__ = "price_history"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    product_id = Column(Integer, ForeignKey("products.id"))
+    product_id = Column(
+        Integer,
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
     month = Column(String)
     price = Column(Float)
 
@@ -83,14 +114,20 @@ class PriceHistory(Base):
 
 
 # ============================================================
-# AVAILABILITY
+# AVAILABILITY (Optional - For regional analytics)
 # ============================================================
 class Availability(Base):
     __tablename__ = "availability"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    product_id = Column(Integer, ForeignKey("products.id"))
+    product_id = Column(
+        Integer,
+        ForeignKey("products.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
     region = Column(String)
     available = Column(Boolean)
 
