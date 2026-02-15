@@ -1,9 +1,6 @@
 {
   "routes": [
-    { "src": "/(.*)", "dest": "/" }
-  ],
-  "engines": [{
-  "node": "20.x"
-}]
-
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }
+
