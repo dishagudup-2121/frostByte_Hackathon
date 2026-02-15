@@ -30,6 +30,7 @@ class SocialPost(Base):
 class Product(Base):
     __tablename__ = "products"
 
+
     id = Column(Integer, primary_key=True, index=True)
 
     model_name = Column(String, index=True, nullable=False)

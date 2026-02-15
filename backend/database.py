@@ -1,11 +1,15 @@
+import os
 from sqlalchemy import create_engine
+from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker, declarative_base
+
+load_dotenv()
 
 # PostgreSQL connection URL
 # Update username, password, host, and db name as needed
-DATABASE_URL = "postgresql+psycopg2://frostbyte:frostbyte26@localhost:5432/geodrive_insight"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

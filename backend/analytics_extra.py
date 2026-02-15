@@ -3,146 +3,74 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.database import get_db
 from backend import models
+<<<<<<< HEAD
 from datetime import datetime
+=======
+from datetime import datetime, timedelta
+>>>>>>> c808026291fc235df6d0142b54f66f2780db5386
 
 router = APIRouter()
 
-@router.get("/brand-summary")
-def brand_summary(db: Session = Depends(get_db)):
-
-    result = (
-        db.query(
-            models.SocialPost.brand,
-            func.count(models.SocialPost.id).label("total_posts")
-        )
-        .group_by(models.SocialPost.brand)
-        .all()
-    )
-
-    return [
-        {
-            "brand": r.brand,
-            "total_posts": r.total_posts
-        }
-        for r in result
-    ]
 
 
-@router.get("/location-summary")
-def location_summary(db: Session = Depends(get_db)):
+# -----------------------------
+# HELPER FUNCTIONS
+# -----------------------------
+def sentiment_trend_timewindow(reviews):
+    """Compare last 30 days vs previous 30 days"""
+    now = datetime.utcnow()
+    last_30 = now - timedelta(days=30)
+    prev_60 = now - timedelta(days=60)
 
-    results = (
-        db.query(
-            models.SocialPost.latitude,
-            models.SocialPost.longitude,
-            func.count(models.SocialPost.id).label("total_posts")
-        )
-        .group_by(
-            models.SocialPost.latitude,
-            models.SocialPost.longitude
-        )
-        .all()
-    )
+    recent = [r for r in reviews if r.created_at >= last_30]
+    previous = [r for r in reviews if prev_60 <= r.created_at < last_30]
 
-    return [
-        {
-            "latitude": r.latitude,
-            "longitude": r.longitude,
-            "total_posts": r.total_posts
-        }
-        for r in results
-    ]
+    def score(data):
+        if not data:
+            return 0
+        return sum(
+            1 if r.sentiment == "positive"
+            else -1 if r.sentiment == "negative"
+            else 0
+            for r in data
+        ) / len(data)
 
+    r1, r2 = score(recent), score(previous)
 
-@router.get("/brand-sentiment-ratio")
-def brand_sentiment_ratio(db: Session = Depends(get_db)):
-
-    results = (
-        db.query(
-            models.SocialPost.brand,
-            models.SocialPost.sentiment,
-            func.count(models.SocialPost.id).label("count")
-        )
-        .group_by(
-            models.SocialPost.brand,
-            models.SocialPost.sentiment
-        )
-        .all()
-    )
-
-    data = {}
-
-    for r in results:
-        if r.brand not in data:
-            data[r.brand] = {
-                "brand": r.brand,
-                "positive": 0,
-                "negative": 0,
-                "neutral": 0
-            }
-
-        data[r.brand][r.sentiment] = r.count
-
-    return list(data.values())
+    if r1 > r2:
+        return "↑ Improving"
+    elif r1 < r2:
+        return "↓ Declining"
+    return "→ Stable"
 
 
+def ai_feature_gap(c1, c2, company1, company2):
+    insights = []
 
-@router.get("/product/{id}/reviews")
-def get_product_reviews(id: int, sentiment: str = None, db: Session = Depends(get_db)):
-    
-    query = db.query(models.Review).filter(models.Review.product_id == id)
+    for f in c1.keys():
+        if abs(c1[f] - c2[f]) < 5:
+            continue
 
-    if sentiment:
-        query = query.filter(models.Review.sentiment == sentiment)
+        if c1[f] > c2[f]:
+            insights.append(f"{company1} strong in {f}, {company2} lagging")
+        else:
+            insights.append(f"{company2} strong in {f}, {company1} lagging")
 
-    reviews = query.all()
+    return " | ".join(insights)
 
-    if not reviews:
-        raise HTTPException(status_code=404, detail="No reviews found")
 
-    return [
-        {
-            "comment": r.comment,
-            "sentiment": r.sentiment,
-            "confidence": r.confidence
-        }
-        for r in reviews
-    ]
-@router.get("/company-summary/{company}")
-def company_summary(company: str, db: Session = Depends(get_db)):
-
-    products = db.query(models.Product).filter(
-        func.lower(models.Product.company) == company.lower()
-    ).all()
-
-    if not products:
-        return {"error": "Company not found"}
-
-    product_ids = [p.id for p in products]
-
-    total_models = len(products)
-
-    total_reviews = db.query(models.Review).filter(
-        models.Review.product_id.in_(product_ids)
-    ).count()
-
-    positive_reviews = db.query(models.Review).filter(
-        models.Review.product_id.in_(product_ids),
-        models.Review.sentiment == "positive"
-    ).count()
-
-    overall_positive = (
-        int((positive_reviews / total_reviews) * 100)
-        if total_reviews else 0
-    )
+def recommendation(features):
+    best_perf = max(features, key=lambda x: features[x]["performance"])
+    best_value = max(features, key=lambda x: features[x]["price"])
+    best_overall = max(features, key=lambda x: sum(features[x].values()))
 
     return {
-        "company": company,
-        "total_models": total_models,
-        "total_reviews": total_reviews,
-        "overall_positive_percent": overall_positive
+        "Best Performance": best_perf,
+        "Best Value": best_value,
+        "Best Overall Sentiment": best_overall
     }
 
+<<<<<<< HEAD
 
 
 
@@ -341,3 +269,5 @@ def company_model_insights(company: str, db: Session = Depends(get_db)):
         })
 
     return response
+=======
+>>>>>>> c808026291fc235df6d0142b54f66f2780db5386

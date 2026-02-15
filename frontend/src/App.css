@@ -3,11 +3,14 @@
 :root {
   --primary: #6366f1;
   --accent: #34d399;
+  --accent-alt: #00f2ff; /* Added for the dashboard gradient match */
   --bg-dark: #020617;
   --glass: rgba(255, 255, 255, 0.03);
   --glass-heavy: rgba(15, 23, 42, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
   --text-muted: #94a3b8;
+  /* Unified Gradient for all primary buttons */
+  --btn-gradient: linear-gradient(135deg, #6366f1, #00f2ff);
 }
 
 /* ========================================================= */
@@ -56,7 +59,6 @@ body {
   margin: 30px 0;
 }
 
-
 .text-gradient {
   background: linear-gradient(to right, var(--primary), var(--accent));
   background-clip: text;
@@ -68,6 +70,21 @@ body {
   animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   opacity: 0;
 }
+.launch-btn {
+  background: rgba(255,255,255,0.05);
+  border: 10px solid rgba(255,255,255,0.12);
+  color: white;
+  padding: 20px 36px;
+  border-radius: 800px;
+  transition: 0.25s ease;
+}
+
+/* soft glow on hover */
+.launch-btn:hover {
+  box-shadow: 0 0 14px rgba(99,102,241,0.45);
+  transform: translateY(-1px);
+}
+
 
 @keyframes slideUp {
   from { transform: translateY(30px); opacity: 0; }
@@ -78,7 +95,7 @@ body {
 /* CARD SYSTEM */
 /* ========================================================= */
 
-.card {
+.card, .comp-card, .comparison-card, .product-comparison-card {
   background: var(--glass);
   backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
@@ -113,11 +130,15 @@ body {
   gap: 35px;
 }
 
-/* Header */
-
 .header-top {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 14px;
   align-items: center;
 }
 
@@ -125,6 +146,7 @@ body {
   font-size: 2.4rem;
   font-weight: 800;
   margin: 0;
+  color: white; /* Kept White */
 }
 
 .hero-3d-section {
@@ -138,6 +160,9 @@ body {
   color: black;
   padding: 18px 40px;
   border-radius: 100px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
 }
 
 .subtitle {
@@ -151,7 +176,7 @@ body {
 /* INPUT AREA */
 /* ========================================================= */
 
-.premium-textarea {
+.premium-textarea, .compare-inputs input {
   width: 97%;
   min-height: 130px;
   background: var(--glass-heavy);
@@ -185,15 +210,18 @@ body {
 }
 
 /* ========================================================= */
-/* BUTTONS */
+/* BUTTONS - UNIFIED COLOR SCHEME */
 /* ========================================================= */
 
+/* Main Primary Buttons */
 .premium-btn,
-.export-btn,
-.back-home-btn {
-  background: var(--primary);
-  color: white;
-  border: none;
+.comp-btn,
+.compare-btn,
+.comp-nav-btn,
+.company-insights-btn {
+  background: var(--btn-gradient) !important;
+  color: white !important;
+  border: none !important;
   padding: 12px 22px;
   border-radius: 12px;
   font-weight: 700;
@@ -201,13 +229,33 @@ body {
   transition: 0.3s ease;
 }
 
+/* Secondary Buttons */
+/* Secondary Buttons */
+.export-btn,
 .back-home-btn,
-.export-btn {
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
+.back-btn,
+.pdf-btn {
+  background: rgba(255,255,255,0.05) !important;
+  color: white !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  padding: 12px 22px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s ease;
 }
 
-.premium-btn:hover {
+/* Hover polish */
+.export-btn:hover,
+.back-home-btn:hover,
+.back-btn:hover,
+.pdf-btn:hover {
+  background: rgba(255,255,255,0.1) !important;
+  transform: translateY(-1px);
+}
+
+
+.premium-btn:hover, .comp-nav-btn:hover, .compare-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 0 18px rgba(99, 102, 241, 0.4);
 }
@@ -234,32 +282,72 @@ body {
   gap: 25px;
 }
 
-/* ========================================================= */
-/* CHARTS */
-/* ========================================================= */
+/* ============================= */
+/* COMPETITIVE INTELLIGENCE PAGE */
+/* ============================= */
 
-.chart-box {
-  min-height: 420px;
+.comp-intel-page {
+  padding: 40px;
+  min-height: 100vh;
+  background: var(--bg-dark);
+}
+
+.comp-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
 }
 
-.chart-inner {
+/* Heading page 2 - White only */
+.comp-intel-page h1, 
+.comp-intel-page h2 {
+  color: white; 
+  font-size: 2.4rem;
+  font-weight: 800;
+}
+
+.comp-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+/* ============================= */
+/* PRODUCT COMPARISON FIXES */
+/* ============================= */
+
+.compare-inputs {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.compare-inputs input {
   flex: 1;
-  position: relative;
-  height: 100%;
+  min-height: auto; /* Overriding textarea min-height */
+  padding: 12px;
+  margin-bottom: 0;
 }
 
-.chart-inner canvas {
-  max-height: 320px !important;
+.action-buttons {
+  display: flex;
+  gap: 15px;
 }
 
 /* ========================================================= */
-/* MAP */
+/* BACKGROUND GLOW */
 /* ========================================================= */
 
-.map-card {
-  min-height: 500px;
+.bg-glow {
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  background: var(--primary);
+  filter: blur(250px);
+  opacity: 0.15;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* ========================================================= */
@@ -291,98 +379,6 @@ body {
 .neutral  { color: #eab308; }
 
 /* ========================================================= */
-/* PRODUCT RESULT */
-/* ========================================================= */
-
-.result-section {
-  margin-top: 30px;
-  padding: 22px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 18px;
-}
-
-.price-box {
-  font-size: 17px;
-  margin: 12px 0;
-}
-
-.verdict-box {
-  margin-top: 25px;
-  padding: 16px;
-  background: rgba(99,102,241,0.08);
-  border-left: 4px solid var(--primary);
-  border-radius: 12px;
-}
-
-.error-text {
-  color: #ef4444;
-  margin-top: 10px;
-}
-
-/* ========================================================= */
-/* COMPANY INSIGHTS */
-/* ========================================================= */
-
-.company-insights-wrapper {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-}
-
-.company-insights-card {
-  padding: 26px;
-  border-radius: 20px;
-  width: 100%;
-  background: rgba(18, 22, 45, 0.55);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  transition: 0.3s ease;
-}
-
-.company-insights-card:hover {
-  transform: translateY(-5px);
-}
-
-.company-insights-btn {
-  width: 100%;
-  padding: 12px;
-  border-radius: 14px;
-  border: none;
-  cursor: pointer;
-  background: linear-gradient(135deg,#6366f1,#00f2ff);
-  color: white;
-  font-weight: 600;
-  transition: 0.25s ease;
-}
-
-.company-insights-data {
-  margin-top: 20px;
-  font-size: 15px;
-  color: rgba(255,255,255,0.85);
-}
-
-.company-insights-data span {
-  color: #00f2ff;
-  font-weight: 600;
-}
-
-/* ========================================================= */
-/* BACKGROUND GLOW */
-/* ========================================================= */
-
-.bg-glow {
-  position: absolute;
-  width: 800px;
-  height: 800px;
-  background: var(--primary);
-  filter: blur(250px);
-  opacity: 0.15;
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* ========================================================= */
 /* RESPONSIVE */
 /* ========================================================= */
 
@@ -392,12 +388,9 @@ body {
   .product-insight-row {
     grid-template-columns: 1fr;
   }
-
-  .hero-title-small {
-    font-size: 1.8rem;
-  }
 }
 
+<<<<<<< HEAD
 
 /* ========================= */
 /* MARKET TREND BUTTON */
@@ -426,3 +419,150 @@ body {
 .trend-btn:active {
   transform: scale(0.98);
 }
+=======
+/* ============================= */
+/* HEADER BUTTON ALIGNMENT FIX */
+/* ============================= */
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.export-btn,
+.comp-nav-btn {
+  height: 44px;
+  border-radius: 14px;
+}
+
+/* Make both buttons same look */
+.comp-nav-btn {
+  background: linear-gradient(135deg,#6366f1,#00f2ff) !important;
+  border: none !important;
+}
+
+.export-btn {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+/* ============================= */
+/* COMPETITIVE PAGE THEME MATCH */
+/* ============================= */
+
+.comp-intel-page {
+  background: #020617 !important;
+  color: white;
+}
+
+/* Page heading same as dashboard */
+.comp-intel-page h1,
+.comp-intel-page h2 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 25px;
+}
+
+/* Card theme fix */
+.comp-card,
+.comparison-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+}
+
+/* ============================= */
+/* PRODUCT COMPARISON FIX */
+/* ============================= */
+
+.product-comparison-section,
+.product-comparison-card {
+  background: rgba(255,255,255,0.04) !important;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Inputs same everywhere */
+.compare-inputs input {
+  background: rgba(15,23,42,0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+}
+
+/* Compare button match dashboard */
+.compare-btn {
+  background: linear-gradient(135deg,#6366f1,#00f2ff);
+  border-radius: 14px;
+}
+
+/* ============================= */
+/* BACK BUTTON CONSISTENCY */
+/* ============================= */
+
+.back-btn,
+.back-home-btn {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+}
+
+/***** Competitive page heading fix *****/
+.comp-intel-page h1,
+.comp-intel-page h2 {
+  color: white;                 /* same as dashboard */
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+/* optional gradient like dashboard */
+.comp-intel-page .text-gradient {
+  background: linear-gradient(to right,#6366f1,#34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Smaller competitive page heading */
+.comp-intel-page .hero-title-small {
+  font-size: 1.6rem;   /* adjust if needed */
+}
+
+.company-insights-btn {
+  background: linear-gradient(135deg,#6366f1,#00f2ff) !important;
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-weight: 600;
+  color: white;
+  border: none;
+  transition: 0.25s ease;
+}
+
+.company-insights-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(99,102,241,0.35);
+}
+
+
+
+.team-btn {
+  background: linear-gradient(135deg, #6366f1, #00f2ff);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.team-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+  
+}
+
+>>>>>>> c808026291fc235df6d0142b54f66f2780db5386

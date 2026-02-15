@@ -272,18 +272,43 @@ export default function Dashboard() {
 
       <main className="dashboard-container-v3" ref={reportRef}>
         {/* Header */}
-        <header className="header-top anim-up">
-          <button className="back-home-btn" onClick={() => navigate("/")}>
-            Home
-          </button>
+<header className="header-top anim-up">
+  <button className="back-home-btn" onClick={() => navigate("/")}>
+    Home
+  </button>
 
-          <div>
-            <h1 className="hero-title-small">
-              <span className="text-gradient">GeoDrive</span> Pro Dashboard
-            </h1>
-            <p className="subtitle">Intelligence Hub</p>
-          </div>
+  <div>
+    <h1 className="hero-title-small">
+      <span className="text-gradient">GeoDrive</span> Pro Dashboard
+    </h1>
+    <p className="subtitle">Intelligence Hub</p>
+  </div>
 
+  <div className="header-actions">
+    <button className="export-btn" onClick={exportPDF}>
+      Export PDF
+    </button>
+
+    <button
+      className="comp-nav-btn"
+      onClick={() => navigate("/competitive")}
+    >
+      Competitive Intelligence
+    </button>
+    <button
+      className="team-btn"
+      onClick={() => navigate("/team")}
+    >
+      Team Info
+    </button>
+    {/* <button onClick={() => window.location.href="/team"}>
+  Team Info
+</button> */}
+
+  </div>
+</header>
+
+<<<<<<< HEAD
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <select
               value={exportType}
@@ -311,6 +336,8 @@ export default function Dashboard() {
 
 
         </header>
+=======
+>>>>>>> c808026291fc235df6d0142b54f66f2780db5386
 
         {/* Input Section */}
         <section className="card glass-card anim-up">
@@ -334,9 +361,17 @@ export default function Dashboard() {
 
         {/* Deep Scan */}
         <div className="product-insight-row">
+<<<<<<< HEAD
           <ProductDetails onDataReceived={(d)=>setProductResult(d)} />
           <CompanyInsights company={productResult?.company} />
         </div>
+=======
+          
+  <ProductDetails onDataReceived={(d)=>setProductResult(d)} />
+
+  <CompanyInsights company={productResult?.company} />
+</div>
+>>>>>>> c808026291fc235df6d0142b54f66f2780db5386
 
         {brandTrend && (
           <div className="card">
