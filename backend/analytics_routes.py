@@ -5,6 +5,10 @@ from sqlalchemy.sql import cast
 from sqlalchemy.types import Date
 from backend.database import get_db
 from backend import models
+# from backend.analytics_extra import generate_ai_insight
+from backend.analytics_extra import sentiment_trend, recommendation
+
+
 
 router = APIRouter()
 
@@ -54,3 +58,22 @@ def daily_trend(db: Session = Depends(get_db)):
         }
         for r in results
     ]
+
+@router.get("/compare-insights")
+def compare_insights(company1: str, company2: str, db: Session = Depends(get_db)):
+
+    # example feature aggregation (adjust to your schema)
+    c1_features = {"performance": 70, "price": 80}
+    c2_features = {"performance": 85, "price": 40}
+
+    ai_insight = generate_ai_insight(
+        c1_features, c2_features, company1, company2
+    )
+
+    return {
+        "feature_comparison": {
+            company1: c1_features,
+            company2: c2_features
+        },
+        "ai_insight": ai_insight
+    }

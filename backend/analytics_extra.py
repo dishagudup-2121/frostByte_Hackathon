@@ -320,6 +320,137 @@ def market_sentiment_share(db: Session = Depends(get_db)):
         }
         for r in results
     ]
+@router.get("/feature-comparison")
+def feature_comparison(company1: str, company2: str, db: Session = Depends(get_db)):
+
+    features = {
+        "price": ["price", "cost", "expensive", "affordable", "value"],
+        "comfort": ["comfort", "seat", "interior"],
+        "performance": ["performance", "power", "engine", "speed"],
+        "mileage": ["mileage", "fuel", "economy"]
+    }
+
+    def analyze(company):
+        results = {f: 0 for f in features}
+
+        reviews = (
+            db.query(models.Review.comment, models.Review.sentiment)
+            .join(models.Product, models.Product.id == models.Review.product_id)
+            .filter(func.lower(models.Product.company) == company.lower())
+            .all()
+        )
+
+        for comment, sentiment in reviews:
+            if sentiment != "positive":
+                continue
+
+            text = comment.lower()
+            for f, words in features.items():
+                if any(w in text for w in words):
+                    results[f] += 1
+
+        total = sum(results.values()) or 1
+        return {f: round((v / total) * 100, 1) for f, v in results.items()}
+
+    c1 = analyze(company1)
+    c2 = analyze(company2)
+
+    # Get recent reviews for trend (simple version)
+    company_reviews = (
+    db.query(models.Review)
+    .join(models.Product, models.Product.id == models.Review.product_id)
+    .filter(func.lower(models.Product.company).in_([company1.lower(), company2.lower()]))
+    .order_by(models.Review.id.desc())
+    .all()
+)
+
+    reviews_c1 = (
+    db.query(models.Review)
+    .join(models.Product, models.Product.id == models.Review.product_id)
+    .filter(func.lower(models.Product.company) == company1.lower())
+    .order_by(models.Review.id.desc())
+    .all()
+)
+
+    reviews_c2 = (
+    db.query(models.Review)
+    .join(models.Product, models.Product.id == models.Review.product_id)
+    .filter(func.lower(models.Product.company) == company2.lower())
+    .order_by(models.Review.id.desc())
+    .all()
+)
+
+    trend = {
+    company1: sentiment_trend(reviews_c1),
+    company2: sentiment_trend(reviews_c2)
+}
+
+
+# Separate variable for recommendation
+    feature_data = {
+    company1: c1,
+    company2: c2
+}
+
+    rec = recommendation(feature_data)
+
+# ⭐ AI insight auto-generation (FIXED)
+    insight = []
+    for f in c1.keys():
+      if c1.get(f, 0) > c2.get(f, 0):
+        insight.append(f"{company2} should improve {f}")
+      elif c2.get(f, 0) > c1.get(f, 0):
+        insight.append(f"{company1} should improve {f}")
+
+
+    return {
+    "company1": company1,
+    "company2": company2,
+    "features1": c1,
+    "features2": c2,
+    "ai_insight": " | ".join(insight),
+    "trend": trend,
+    "recommendation": rec
+}
+
+
+def sentiment_trend(reviews):
+    # last 30 vs previous 30
+    recent = reviews[:30]
+    previous = reviews[30:60]
+
+    def avg(data):
+        if not data:
+            return 0
+        score = sum(
+            1 if r.sentiment == "positive"
+            else -1 if r.sentiment == "negative"
+            else 0
+            for r in data
+        )
+        return score / len(data)
+
+    r1 = avg(recent)
+    r2 = avg(previous)
+
+    if r1 > r2:
+        return "↑ Improving"
+    elif r1 < r2:
+        return "↓ Declining"
+    else:
+        return "→ Stable"
+
+def recommendation(features):
+    best_perf = max(features, key=lambda x: features[x]["performance"])
+    best_value = max(features, key=lambda x: features[x]["price"])
+    best_overall = max(features, key=lambda x: sum(features[x].values()))
+
+    return {
+        "Best Performance": best_perf,
+        "Best Value": best_value,
+        "Best Overall Sentiment": best_overall
+    }
+
 
 
 

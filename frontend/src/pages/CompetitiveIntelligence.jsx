@@ -11,12 +11,22 @@ export default function CompetitiveIntelligence() {
   const [competitorInsight, setCompetitorInsight] = useState("");
   const [trendDirection, setTrendDirection] = useState("");
   const [sentimentShare, setSentimentShare] = useState([]);
+  const [featureData, setFeatureData] = useState(null);
+  const [company1, setCompany1] = useState("");
+const [company2, setCompany2] = useState("");
+const [comparison, setComparison] = useState(null);
+
+
 
 
 
   useEffect(() => {
     fetchBrandSummary();
+    fetchFeatureComparison();
   }, []);
+
+ 
+
 
   const fetchBrandSummary = async () => {
     try {
@@ -58,6 +68,23 @@ useEffect(() => {
       : "Competitive shift happening"
   );
 };
+ const fetchFeatureComparison = async () => {
+  const res = await axios.get(
+    "http://127.0.0.1:8000/analytics/feature-comparison/BMW/Hyundai"
+  );
+  setFeatureData(res.data);
+};
+
+
+const fetchComparison = async () => {
+  const res = await axios.get(
+    `http://127.0.0.1:8000/analytics/feature-comparison`,
+    { params: { company1, company2 } }
+  );
+  setComparison(res.data);
+};
+
+
 
 
   const generateColors = (n) =>
@@ -68,11 +95,29 @@ useEffect(() => {
 
   return (
     <div className="dashboard-container-v3">
-      <h1>Competitive Intelligence</h1>
+     <h1 className="hero-title-small">
+  <span className="text-gradient">Competitive</span> Intelligence
+</h1>
+
+
+  <div className="action-buttons">
+  
+
+  <button
+    className="back-btn"
+    onClick={() => window.location.href = "/dashboard"}
+  >
+    Back to Dashboard
+  </button>
+</div>
+
 
       {brandData.length > 0 && (
         <div className="card">
-          <h3>Market Sentiment Share</h3>
+         <h3 className="hero-title-small" style={{ fontSize: "1.6rem" }}>
+  <span className="text-gradient">Market</span> Sentiment Share
+</h3>
+
 
 <div style={{ height: "320px", maxWidth: "420px", margin: "auto" }}>
   <Doughnut
@@ -102,21 +147,126 @@ useEffect(() => {
 }}
 
   />
+
 </div>
           {/* Competitor Gap Insight */}
 <div className="card" style={{ marginTop: "20px" }}>
-  <h3>Competitor Gap Insight</h3>
+  <h3 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
+  <span className="text-gradient">Competitor</span> Gap Insight
+</h3>
   <p>{competitorInsight}</p>
 </div>
 
 {/* Trend Direction */}
 <div className="card">
-  <h3>Trend Direction</h3>
+  
+  <h3 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
+
+  <span className="text-gradient">Trend</span> Direction
+
+</h3>
+
   <p>{trendDirection}</p>
 </div>
 
+  {featureData && (
+  <div className="card" style={{ marginTop: "30px" }}>
+    
+    <h3>Feature Level Comparison</h3>
+
+    {Object.keys(featureData.brand1_features).map(f => (
+      <p key={f}>
+        <b>{f.toUpperCase()}</b> :
+        {" "}
+        {featureData.brand1} → {featureData.brand1_features[f]}%
+        {" | "}
+        {featureData.brand2} → {featureData.brand2_features[f]}%
+      </p>
+    ))}
+  </div>
+)}
+
+<div className="comparison-card">
+  <h2 className="hero-title-small" style={{ fontSize: "1.5rem" }}>
+
+  <span className="text-gradient">Product</span>  Comparison
+
+</h2>
+
+  <div className="compare-inputs">
+    <input
+      placeholder="Model 1"
+      value={company1}
+      onChange={(e) => setCompany1(e.target.value)}
+    />
+
+    <input
+      placeholder="Model 2"
+      value={company2}
+      onChange={(e) => setCompany2(e.target.value)}
+    />
+
+    <button className="compare-btn" onClick={fetchComparison}>
+      Compare
+    </button>
+  </div>
+</div>
 
 
+{comparison && (
+  <div className="card">
+
+    <h3 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
+      <span className="text-gradient">Feature</span> Level Comparison
+    </h3>
+
+    {/* Feature comparison */}
+    {Object.keys(comparison.features1).map(f => (
+      <p key={f}>
+        <b>{f.toUpperCase()}</b> :
+        {" "}
+        {comparison.company1} → {comparison.features1[f]}%
+        {" | "}
+        {comparison.company2} → {comparison.features2[f]}%
+      </p>
+    ))}
+
+    {/* AI Insight */}
+    <h4 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
+      <span className="text-gradient">AI</span> Insight
+    </h4>
+    <p>{comparison.ai_insight}</p>
+
+    {/* Trend Direction */}
+    <h4 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
+      <span className="text-gradient">Trend</span> Direction
+    </h4>
+    <p>{comparison.company1} : {comparison?.trend?.[comparison.company1]}</p>
+    <p>{comparison.company2} : {comparison?.trend?.[comparison.company2]}</p>
+
+
+    {/* Recommendation */}
+    <h4 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
+      <span className="text-gradient">Recommendation</span>
+    </h4>
+
+    <p>
+      Best Performance →{" "}
+      {comparison?.recommendation?.["Best Performance"]}
+    </p>
+
+    <p>
+      Best Value →{" "}
+      {comparison?.recommendation?.["Best Value"]}
+    </p>
+
+    <p>
+      Best Overall Sentiment →{" "}
+      {comparison?.recommendation?.["Best Overall Sentiment"]}
+    </p>
+
+  </div>
+)}
         </div>
       )}
     </div>
@@ -126,120 +276,3 @@ useEffect(() => {
 
 
 
-
-// export default function CompetitiveIntelligence({
-//   productA,
-//   productB
-// }) 
-// {
-
-//   const navigate = useNavigate();
-
-//   const exportPDF = () => {
-//     const pdf = new jsPDF();
-//     let y = 20;
-
-//     pdf.setFontSize(18);
-//     pdf.text("Competitive Intelligence Report", 20, y);
-
-//     y += 15;
-
-//     pdf.setFontSize(12);
-//     pdf.text(`Product A: ${productA?.model_name}`, 20, y);
-//     y += 8;
-//     pdf.text(`Product B: ${productB?.model_name}`, 20, y);
-
-//     y += 12;
-//     pdf.text("Market Sentiment Share:", 20, y);
-//     y += 8;
-//     pdf.text(
-//       `${productA?.model_name}: ${productA?.positive_percent}%`,
-//       20,
-//       y
-//     );
-//     y += 8;
-//     pdf.text(
-//       `${productB?.model_name}: ${productB?.positive_percent}%`,
-//       20,
-//       y
-//     );
-
-//     pdf.save("Competitive_Report.pdf");
-//   };
-
-//   const competitorGapInsight = () => {
-//     if (!productA || !productB) return "";
-
-//     if (productA.positive_percent > productB.positive_percent)
-//       return `${productA.model_name} has stronger market sentiment advantage.`;
-
-//     return `${productB.model_name} currently leads customer perception.`;
-//   };
-
-//   return (
-//     <div className="comp-intel-page">
-
-//       {/* HEADER */}
-//       <div className="comp-header">
-//         <button
-//           className="comp-btn back-btn"
-//           onClick={() => navigate("/dashboard")}
-//         >
-//           ← Back Dashboard
-//         </button>
-
-//         <button
-//           className="comp-btn"
-//           onClick={exportPDF}
-//         >
-//           Export Report
-//         </button>
-//       </div>
-
-//       {/* SENTIMENT SHARE */}
-//       <div className="comp-card">
-//         <div className="comp-title">
-//           Market Sentiment Share
-//         </div>
-
-//         <p>{productA?.model_name}: {productA?.positive_percent}%</p>
-//         <p>{productB?.model_name}: {productB?.positive_percent}%</p>
-//       </div>
-
-//       {/* PRICE INSIGHT */}
-//       <div className="comp-card">
-//         <div className="comp-title">
-//           Price Perception Insight
-//         </div>
-
-//         <p>
-//           {productA?.current_price > productB?.current_price
-//             ? `${productA.model_name} positioned premium.`
-//             : `${productB.model_name} positioned premium.`}
-//         </p>
-//       </div>
-
-//       {/* COMPETITOR GAP */}
-//       <div className="comp-card">
-//         <div className="comp-title">
-//           Competitor Gap Insight
-//         </div>
-
-//         <p>{competitorGapInsight()}</p>
-//       </div>
-
-//       {/* TREND INSIGHT */}
-//       <div className="comp-card">
-//         <div className="comp-title">
-//           Trend Direction
-//         </div>
-
-//         <p>
-//           Hyundai sentiment ↑ last month, BMW slightly ↓
-//           (Example AI trend insight placeholder).
-//         </p>
-//       </div>
-
-//     </div>
-//   );
-// }

@@ -159,27 +159,32 @@ export default function Dashboard() {
 
       <main className="dashboard-container-v3" ref={reportRef}>
         {/* Header */}
-        <header className="header-top anim-up">
-          <button className="back-home-btn" onClick={() => navigate("/")}>
-            Home
-          </button>
+<header className="header-top anim-up">
+  <button className="back-home-btn" onClick={() => navigate("/")}>
+    Home
+  </button>
 
-          <div>
-            <h1 className="hero-title-small">
-              <span className="text-gradient">GeoDrive</span> Pro Dashboard
-            </h1>
-            <p className="subtitle">Intelligence Hub</p>
-          </div>
+  <div>
+    <h1 className="hero-title-small">
+      <span className="text-gradient">GeoDrive</span> Pro Dashboard
+    </h1>
+    <p className="subtitle">Intelligence Hub</p>
+  </div>
 
-          <button className="export-btn" onClick={exportPDF}>
-            Export PDF
-          </button>
-          <button onClick={() => navigate("/competitive")}>
-            Competitive Intelligence
-            </button>
+  <div className="header-actions">
+    <button className="export-btn" onClick={exportPDF}>
+      Export PDF
+    </button>
 
-          
-        </header>
+    <button
+      className="comp-nav-btn"
+      onClick={() => navigate("/competitive")}
+    >
+      Competitive Intelligence
+    </button>
+  </div>
+</header>
+
 
         {/* Input Section */}
         <section className="card glass-card anim-up">
