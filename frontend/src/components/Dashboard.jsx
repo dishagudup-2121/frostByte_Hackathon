@@ -285,9 +285,9 @@ export default function Dashboard() {
   </div>
 
   <div className="header-actions">
-    <button className="export-btn" onClick={exportPDF}>
+    {/* <button className="export-btn" onClick={exportPDF}>
       Export PDF
-    </button>
+    </button> */}
 
     <button
       className="comp-nav-btn"
@@ -306,9 +306,8 @@ export default function Dashboard() {
 </button> */}
 
   </div>
-</header>
+{/* </header> */}
 
-<<<<<<< HEAD
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <select
               value={exportType}
@@ -335,9 +334,7 @@ export default function Dashboard() {
           </div>
 
 
-        </header>
-=======
->>>>>>> c808026291fc235df6d0142b54f66f2780db5386
+</header>
 
         {/* Input Section */}
         <section className="card glass-card anim-up">
@@ -361,17 +358,9 @@ export default function Dashboard() {
 
         {/* Deep Scan */}
         <div className="product-insight-row">
-<<<<<<< HEAD
           <ProductDetails onDataReceived={(d)=>setProductResult(d)} />
           <CompanyInsights company={productResult?.company} />
         </div>
-=======
-          
-  <ProductDetails onDataReceived={(d)=>setProductResult(d)} />
-
-  <CompanyInsights company={productResult?.company} />
-</div>
->>>>>>> c808026291fc235df6d0142b54f66f2780db5386
 
         {brandTrend && (
           <div className="card">
@@ -563,4 +552,4 @@ export default function Dashboard() {
       </main>
     </div>
   );
-} 
+}

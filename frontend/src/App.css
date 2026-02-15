@@ -238,7 +238,7 @@ body {
   background: rgba(255,255,255,0.05) !important;
   color: white !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
-  padding: 12px 22px;
+  padding: 12px 50px;
   border-radius: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -390,8 +390,6 @@ body {
   }
 }
 
-<<<<<<< HEAD
-
 /* ========================= */
 /* MARKET TREND BUTTON */
 /* ========================= */
@@ -419,7 +417,6 @@ body {
 .trend-btn:active {
   transform: scale(0.98);
 }
-=======
 /* ============================= */
 /* HEADER BUTTON ALIGNMENT FIX */
 /* ============================= */
@@ -550,7 +547,7 @@ body {
 .team-btn {
   background: linear-gradient(135deg, #6366f1, #00f2ff);
   color: white;
-  padding: 12px 24px;
+  padding: 12px 50px;
   border: none;
   border-radius: 14px;
   font-weight: 600;
@@ -564,5 +561,3 @@ body {
   box-shadow: 0 6px 16px rgba(99,102,241,0.35);
   
 }
-
->>>>>>> c808026291fc235df6d0142b54f66f2780db5386

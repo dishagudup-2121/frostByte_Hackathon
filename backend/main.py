@@ -26,6 +26,7 @@ app.include_router(
     prefix="/analytics",
     tags=["Analytics"]
 )
+app.include_router(extra_router, prefix="/analytics")
 
 app.add_middleware(
     CORSMiddleware,

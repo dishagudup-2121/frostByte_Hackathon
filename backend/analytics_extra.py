@@ -3,11 +3,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.database import get_db
 from backend import models
-<<<<<<< HEAD
+
 from datetime import datetime
-=======
+
 from datetime import datetime, timedelta
->>>>>>> c808026291fc235df6d0142b54f66f2780db5386
+
 
 router = APIRouter()
 
@@ -70,7 +70,6 @@ def recommendation(features):
         "Best Overall Sentiment": best_overall
     }
 
-<<<<<<< HEAD
 
 
 
@@ -269,5 +268,4 @@ def company_model_insights(company: str, db: Session = Depends(get_db)):
         })
 
     return response
-=======
->>>>>>> c808026291fc235df6d0142b54f66f2780db5386
+
