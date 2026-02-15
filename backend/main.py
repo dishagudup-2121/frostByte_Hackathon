@@ -9,6 +9,7 @@ from backend.schemas import SocialPostCreate
 from backend.ai_routes import router as ai_router
 from backend.analytics_extra import router as extra_router
 from fastapi.middleware.cors import CORSMiddleware
+from backend.analytics_routes import router as analytics_router
 
 # ============================================================
 # APP INIT
@@ -20,7 +21,11 @@ print("Tables created.")
 app = FastAPI(title="GeoDrive Insight API")
 
 app.include_router(ai_router, prefix="/ai", tags=["AI"])
-app.include_router(extra_router, prefix="/analytics", tags=["Analytics"])
+app.include_router(
+    analytics_router,
+    prefix="/analytics",
+    tags=["Analytics"]
+)
 
 app.add_middleware(
     CORSMiddleware,

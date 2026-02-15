@@ -72,10 +72,10 @@ body {
 }
 .launch-btn {
   background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 10px solid rgba(255,255,255,0.12);
   color: white;
-  padding: 16px 36px;
-  border-radius: 999px;
+  padding: 20px 36px;
+  border-radius: 800px;
   transition: 0.25s ease;
 }
 
@@ -516,4 +516,22 @@ body {
 }
 
 
+
+.team-btn {
+  background: linear-gradient(135deg, #6366f1, #00f2ff);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.team-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+  
+}
 

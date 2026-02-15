@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./components/Home";
 import Dashboard from "./components/Dashboard";
 import CompetitiveIntelligence from "./pages/CompetitiveIntelligence";
+import TeamPage from "./pages/TeamPage";
 
 
 
@@ -21,7 +22,9 @@ function App() {
 
           {/* AI Sentiment Dashboard: The core data engine */}
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/competitive" element={<CompetitiveIntelligence />}
+          <Route path="/competitive" element={<CompetitiveIntelligence />}/>
+          <Route path="/team" element={<TeamPage />} 
+          
 />
 
         </Routes>

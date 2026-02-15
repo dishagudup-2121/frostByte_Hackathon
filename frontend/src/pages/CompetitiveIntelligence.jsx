@@ -68,24 +68,31 @@ useEffect(() => {
       : "Competitive shift happening"
   );
 };
- const fetchFeatureComparison = async () => {
-  const res = await axios.get(
-    "http://127.0.0.1:8000/analytics/feature-comparison/BMW/Hyundai"
-  );
-  setFeatureData(res.data);
-};
+const fetchFeatureComparison = async () => {
+  try {
+    const res = await axios.get(
+      `${API}/analytics/feature-comparison`,
+      { params: { company1: "BMW", company2: "Hyundai" } }
+    );
 
+    setFeatureData(res.data);
+  } catch (err) {
+    console.error("Feature comparison error:", err);
+  }
+};
 
 const fetchComparison = async () => {
-  const res = await axios.get(
-    `http://127.0.0.1:8000/analytics/feature-comparison`,
-    { params: { company1, company2 } }
-  );
-  setComparison(res.data);
+  try {
+    const res = await axios.get(
+      `${API}/analytics/feature-comparison`,
+      { params: { company1, company2 } }
+    );
+
+    setComparison(res.data);
+  } catch (err) {
+    console.error("Comparison error:", err);
+  }
 };
-
-
-
 
   const generateColors = (n) =>
   Array.from({ length: n }, (_, i) =>
@@ -169,22 +176,25 @@ const fetchComparison = async () => {
   <p>{trendDirection}</p>
 </div>
 
-  {featureData && (
-  <div className="card" style={{ marginTop: "30px" }}>
-    
-    <h3>Feature Level Comparison</h3>
+  {/* {featureData && (
+  <div className="card">
+     <h3 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
+  <span className="text-gradient">Feature Level</span> Comparison
+</h3>
+  
 
-    {Object.keys(featureData.brand1_features).map(f => (
+    {Object.keys(featureData?.features1 || {}).map(f => (
       <p key={f}>
         <b>{f.toUpperCase()}</b> :
-        {" "}
-        {featureData.brand1} → {featureData.brand1_features[f]}%
+        {featureData.company1} → {featureData.features1[f]}%
         {" | "}
-        {featureData.brand2} → {featureData.brand2_features[f]}%
+        {featureData.company2} → {featureData.features2[f]}%
       </p>
     ))}
   </div>
-)}
+)} */
+}
+
 
 <div className="comparison-card">
   <h2 className="hero-title-small" style={{ fontSize: "1.5rem" }}>
@@ -213,60 +223,46 @@ const fetchComparison = async () => {
 </div>
 
 
-{comparison && (
+{comparison?.features1 && comparison?.features2 && (
   <div className="card">
+       <h3 className="hero-title-small" style={{ fontSize: "1.5rem" }}>
+  <span className="text-gradient">Feature Level</span> Comparison
+</h3>
 
-    <h3 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
-      <span className="text-gradient">Feature</span> Level Comparison
-    </h3>
-
-    {/* Feature comparison */}
     {Object.keys(comparison.features1).map(f => (
       <p key={f}>
         <b>{f.toUpperCase()}</b> :
-        {" "}
-        {comparison.company1} → {comparison.features1[f]}%
-        {" | "}
+        {comparison.company1} → {comparison.features1[f]}% |
         {comparison.company2} → {comparison.features2[f]}%
       </p>
     ))}
 
-    {/* AI Insight */}
+    
     <h4 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
-      <span className="text-gradient">AI</span> Insight
-    </h4>
-    <p>{comparison.ai_insight}</p>
+  <span className="text-gradient">AI </span> Insights:
+</h4>
+    
+    <p>{comparison?.ai_insight || "No insight available"}</p>
 
-    {/* Trend Direction */}
-    <h4 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
-      <span className="text-gradient">Trend</span> Direction
-    </h4>
-    <p>{comparison.company1} : {comparison?.trend?.[comparison.company1]}</p>
-    <p>{comparison.company2} : {comparison?.trend?.[comparison.company2]}</p>
-
-
-    {/* Recommendation */}
-    <h4 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
-      <span className="text-gradient">Recommendation</span>
-    </h4>
-
+       <h4 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
+  <span className="text-gradient">Trend</span> Direction:
+</h4>
     <p>
-      Best Performance →{" "}
-      {comparison?.recommendation?.["Best Performance"]}
+      {comparison?.trend?.[comparison.company1]} |
+      {comparison?.trend?.[comparison.company2]}
     </p>
 
-    <p>
-      Best Value →{" "}
-      {comparison?.recommendation?.["Best Value"]}
-    </p>
-
-    <p>
-      Best Overall Sentiment →{" "}
-      {comparison?.recommendation?.["Best Overall Sentiment"]}
-    </p>
-
+    
+      <h4 className="hero-title-small" style={{ fontSize: "1.2rem" }}>
+  <span className="text-gradient">Recommendation </span> for you:
+</h4>
+    
+    <p>Best Performance → {comparison?.recommendation?.["Best Performance"]}</p>
+    <p>Best Value → {comparison?.recommendation?.["Best Value"]}</p>
+    <p>Best Overall → {comparison?.recommendation?.["Best Overall Sentiment"]}</p>
   </div>
 )}
+
         </div>
       )}
     </div>

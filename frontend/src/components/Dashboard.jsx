@@ -182,6 +182,16 @@ export default function Dashboard() {
     >
       Competitive Intelligence
     </button>
+    <button
+      className="team-btn"
+      onClick={() => navigate("/team")}
+    >
+      Team Info
+    </button>
+    {/* <button onClick={() => window.location.href="/team"}>
+  Team Info
+</button> */}
+
   </div>
 </header>
 
@@ -208,7 +218,9 @@ export default function Dashboard() {
 
         {/* Deep Scan */}
         <div className="product-insight-row">
+          
   <ProductDetails onDataReceived={(d)=>setProductResult(d)} />
+
   <CompanyInsights company={productResult?.company} />
 </div>
 
