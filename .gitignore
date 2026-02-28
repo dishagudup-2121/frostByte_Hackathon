@@ -3,14 +3,13 @@ trend/
 venv/
 env/
 ENV/
-*.pyc
-__pycache__/
 
 # Python
 *.py[cod]
 *$py.class
 *.so
 .Python
+__pycache__/
 
 # VS Code
 .vscode/
@@ -21,15 +20,13 @@ __pycache__/
 # Database
 *.db
 *.sqlite3
-*.json
 
 # Logs
 *.log
 
+# Node
+node_modules/
+
 # OS
 .DS_Store
 Thumbs.db
-
-backend/
-__pycache__/
-*.pyc
