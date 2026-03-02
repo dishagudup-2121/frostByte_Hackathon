@@ -15,7 +15,7 @@ export default function GeoMap({ locations }) {
       />
 
       {locations?.map((loc, i) => (
-        <Marker key={i} position={[loc.lat, loc.lon]}>
+        <Marker key={i} position={[loc.lat, loc.lng]}>
           <Popup>
             {loc.region} <br />
             Sentiment: {loc.sentiment}
