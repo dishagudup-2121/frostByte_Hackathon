@@ -3,19 +3,22 @@ trend/
 venv/
 env/
 ENV/
+*.pyc
+__pycache__/
 
 # Python
 *.py[cod]
 *$py.class
 *.so
 .Python
-__pycache__/
 
 # VS Code
 .vscode/
 
 # Environment variables
 .env
+.env.local
+.env.production
 
 # Database
 *.db
@@ -24,9 +27,9 @@ __pycache__/
 # Logs
 *.log
 
-# Node
-node_modules/
-
 # OS
 .DS_Store
 Thumbs.db
+
+__pycache__/
+*.pyc

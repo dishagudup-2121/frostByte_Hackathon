@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: geodrive-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+    envVars:
+      - key: MISTRAL_API_KEY
+        scope: build,runtime
+      - key: DATABASE_URL
+        scope: runtime
+      - key: ENVIRONMENT
+        value: production
+  - type: pserv
+    name: geodrive-db
+    plan: free
+    ipAllowList: []

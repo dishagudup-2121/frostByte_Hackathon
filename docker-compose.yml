@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: geodrive_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: geodrive_insight
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: geodrive_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/geodrive_insight
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY}
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+
+volumes:
+  postgres_data:

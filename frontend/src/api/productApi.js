@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://127.0.0.1:8000"; // keep consistent
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 export const analyzeProduct = (text) =>
   axios.post(`${BASE_URL}/ai/analyze-product`, { text });
@@ -15,7 +15,7 @@ export const getCompanyAnalytics = (company) =>
   axios.get(`${BASE_URL}/analytics/company-summary/${company}`);
 
 export const compareProducts = (model1, model2) =>
-  axios.get("http://127.0.0.1:8000/analytics/compare", {
+  axios.get(`${BASE_URL}/analytics/compare`, {
     params: { model1, model2 }
   });
 
