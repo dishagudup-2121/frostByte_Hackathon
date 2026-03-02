@@ -3,7 +3,7 @@ import axios from "axios";
 import { Bar, Pie } from "react-chartjs-2";
 import "chart.js/auto";
 
-const API = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 export default function CompanyInsights({ company }) {
   const [models, setModels] = useState([]);

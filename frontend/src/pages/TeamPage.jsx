@@ -1,9 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 
 
 
 export default function TeamPage() {
+  const navigate = useNavigate();
   const team = [
     {
       name: "Bhavikesh Hedau",
@@ -36,7 +38,7 @@ export default function TeamPage() {
     <div style={{ padding: "40px" }}>
               <button
         className="back-btn"
-        onClick={() => window.location.href = "/dashboard"}
+                onClick={() => navigate("/dashboard")}
       >
         ← Back to Dashboard
       </button>

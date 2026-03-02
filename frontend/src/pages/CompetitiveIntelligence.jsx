@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Doughnut } from "react-chartjs-2";
+import { useNavigate } from "react-router-dom";
 
 import "chart.js/auto";
 
-const API = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 export default function CompetitiveIntelligence() {
+  const navigate = useNavigate();
   const [brandData, setBrandData] = useState([]);
   const [competitorInsight, setCompetitorInsight] = useState("");
   const [trendDirection, setTrendDirection] = useState("");
@@ -39,9 +41,7 @@ const [comparison, setComparison] = useState(null);
     }
   };
   const fetchMarketShare = async () => {
-  const res = await axios.get(
-    "http://127.0.0.1:8000/analytics/market-sentiment-share"
-  );
+  const res = await axios.get(`${API}/analytics/market-sentiment-share`);
   console.log("Market share:", res.data);
   setSentimentShare(res.data);
 };
@@ -112,7 +112,7 @@ const fetchComparison = async () => {
 
   <button
     className="back-btn"
-    onClick={() => window.location.href = "/dashboard"}
+    onClick={() => navigate("/dashboard")}
   >
     Back to Dashboard
   </button>
